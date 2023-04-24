@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Generated files
+lex.yy.c
+parser.tab.h
+enum_token.hpp
+
+
+# Other
