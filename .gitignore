@@ -35,6 +35,10 @@
 lex.yy.c
 parser.tab.h
 enum_token.hpp
+parser.tab.c
+parser.output
+
 
 
 # Other
+.vscode

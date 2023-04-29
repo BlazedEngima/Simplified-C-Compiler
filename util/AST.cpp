@@ -3,6 +3,7 @@
 Node::Node(node_type _type) : type(_type) {
     this->left = nullptr;
     this->right = nullptr;
+
 }
 
 Node::Node(node_type _type, int value) : type(_type) {
@@ -10,6 +11,7 @@ Node::Node(node_type _type, int value) : type(_type) {
 
     this->left = nullptr;
     this->right = nullptr;
+
 }
 
 Node::Node(node_type _type, std::string str) : type(_type) {
@@ -27,6 +29,7 @@ Node::Node(node_type _type, std::string str) : type(_type) {
         default:
             break;
     }
+
 }
 
 Node::Node(node_type _type, std::string id, int num) : type(_type) {
@@ -43,8 +46,8 @@ Node::~Node() {delete this;}
 int Node::gen_declare_code(MIPS &code) {
 
     std::string reg1 = "$2", reg2 = "$3", reg3 = "$8";
-
-    if (!(this->type != _ROOT_)) {return -1;}
+    
+    if (this->type != _ROOT_) {return -1;}
 
     if (this->left->type == _ID_ && this->right->type == _INT_NUM_) {
         code.sym_table->place_symbol(this->left->var_name);

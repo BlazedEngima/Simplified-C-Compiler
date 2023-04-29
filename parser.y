@@ -1,5 +1,3 @@
-%requires "3.2"
-
 %code requires{    
     #include <iostream>
     #include <string>
@@ -16,9 +14,6 @@
     extern "C" int yyparse(void);
 
     void yyerror(char const *s);
-
-    std::cout << "Code reached here" << std::endl;
-
 }
 
 %code {
@@ -35,7 +30,7 @@
     std::vector<Node*> *node_vector;
 }
 
-%token INT MAIN VOID BREAK DO ELSE IF WHILE RETURN READ_ WRITE_ EOF_
+%token INT MAIN VOID BREAK DO ELSE IF WHILE RETURN READ_ WRITE_
 %token LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE SEMI AND_OP
 %token OR_OP NOT_OP LT GT SHL_OP SHR_OP EQ NOTEQ LTEQ GTEQ ANDAND OROR
 %token COMMA ASSIGNOP PLUSOP MINUSOP MUL_OP DIV_OP
@@ -51,68 +46,75 @@
 %start prog
 
 %%
-prog                : var_declarations statements EOF_;
+prog                : var_declarations;
 
 var_declarations    : var_declaration var_declarations;
-                    |; 
+                    | %empty ; 
 
-var_declaration     : INT declaration_list SEMI {
+var_declaration     : INT declaration_list SEMI 
+                    {
                         for (auto it = $2->begin(); it != $2->end(); it++) {
                             (*it)->gen_declare_code(mips);
                         }
 
-                        // delete $2;
+                        delete $2;
                     };
 
-declaration_list    : declaration_list COMMA declaration {
+declaration_list    : declaration_list COMMA declaration 
+                    {
                         $1->push_back($3);
                         $$ = $1;
                     };
-                    | declaration {
+                    | declaration 
+                    {
                         $$ = new std::vector<Node*>;
                         $$->push_back($1);
                     };
 
-declaration         : ID ASSIGNOP INT_NUM {
+declaration         : ID ASSIGNOP INT_NUM 
+                    {
                         Node *id_node = new Node(_ID_, *($1));
                         Node *int_node = new Node(_INT_NUM_, $3);
                         $$ = new Node(_ROOT_);
                         $$->left = id_node;
                         $$->right = int_node;
                     };
-                    | ID LSQUARE INT_NUM RSQUARE {
+                    | ID LSQUARE INT_NUM RSQUARE 
+                    {
                         // To be edited 
+                        mips.sym_table->place_symbol(*($1));
                         $$ = new Node(_ARRAY_, *($1), $3);
                     };
-                    | ID {
+                    | ID 
+                    {
                         // To be edited
                         $$ = new Node(_ID_, *($1));
                     };
 
-code_block          : statement
+code_block          : statement;
                     | LBRACE statements RBRACE;
 
-statements          : statements statement
+statements          : statements statement;
                     | statement;
 
-statement           : assign_statement SEMI
-                    | control_statement
-                    | read_write_statement SEMI
-                    | BREAK SEMI
+statement           : assign_statement SEMI;
+                    | control_statement;
+                    | read_write_statement SEMI;
+                    | BREAK SEMI;
                     | SEMI;
 
-control_statement   : if_statement
-                    | while_statement
-                    | do_while_statement SEMI
+control_statement   : if_statement;
+                    | while_statement;
+                    | do_while_statement SEMI;
                     | return_statement SEMI;
 
-read_write_statement: read_statement
+read_write_statement: read_statement;
                     | write_statement;
 
-assign_statement    : ID LSQUARE exp RSQUARE ASSIGNOP exp
+assign_statement    : ID LSQUARE exp RSQUARE ASSIGNOP exp;
                     | ID ASSIGNOP exp;
 
-if_statement        : if_stmt %prec THEN
+if_statement        : if_stmt %prec THEN;
                     | if_stmt ELSE code_block;
 
 if_stmt             : IF LPAREN exp RPAREN code_block;
@@ -129,69 +131,76 @@ write_statement     : WRITE_ LPAREN exp RPAREN;
 
 exp                 : exp1;
 
-exp1                : exp1 OROR exp2
+exp1                : exp1 OROR exp2;
                     | exp2;
 
-exp2                : exp2 ANDAND exp3
+exp2                : exp2 ANDAND exp3;
                     | exp3;
 
-exp3                : exp3 OR_OP exp4
+exp3                : exp3 OR_OP exp4;
                     | exp4;
 
-exp4                : exp4 AND_OP exp5
+exp4                : exp4 AND_OP exp5;
                     | exp5;
 
-exp5                : exp5 EQ exp6
-                    | exp5 NOTEQ exp6
+exp5                : exp5 EQ exp6;
+                    | exp5 NOTEQ exp6;
                     | exp6;
 
-exp6                : exp6 LT exp7
-                    | exp6 GT exp7
-                    | exp6 LTEQ exp7
-                    | exp6 GTEQ exp7
+exp6                : exp6 LT exp7;
+                    | exp6 GT exp7;
+                    | exp6 LTEQ exp7;
+                    | exp6 GTEQ exp7;
                     | exp7;
 
-exp7                : exp7 SHL_OP exp8
-                    | exp7 SHR_OP exp8
+exp7                : exp7 SHL_OP exp8;
+                    | exp7 SHR_OP exp8;
                     | exp8;
 
-exp8                : exp8 PLUSOP exp9
-                    | exp8 MINUSOP exp9
+exp8                : exp8 PLUSOP exp9;
+                    | exp8 MINUSOP exp9;
                     | exp9;
 
-exp9                : exp9 MUL_OP exp10
-                    | exp9 DIV_OP exp10
+exp9                : exp9 MUL_OP exp10;
+                    | exp9 DIV_OP exp10;
                     | exp10;
 
-exp10               : NOT_OP exp11 {
+exp10               : NOT_OP exp11
+                    {
                         // To be edited
                         $$ = $2;
                     };
-                    | MINUSOP exp11 {
+                    | MINUSOP exp11 
+                    {
                         // To be edited
                         $$ = $2;
                     };
-                    | exp11 {
+                    | exp11 
+                    {
                         $$ = $1;
                     };
 
-exp11               : ID LSQUARE exp RSQUARE {
+exp11               : ID LSQUARE exp RSQUARE
+                    {
                         // $$ = new Node($1, $3);
                     };
-                    | INT_NUM {
+                    | INT_NUM
+                    {
                         // $$ = $1;
                     };
-                    | ID {
+                    | ID
+                    {
                         // $$ = $1;
                     };
-                    | LPAREN exp RPAREN {
+                    | LPAREN exp RPAREN
+                    {
                         // $$ = $2;
                     };
 %%
 
 int main(int argc, char *argv[]) {
 
-    // yydebug = 1;
+    /* yydebug = 1; */
 
     extern FILE *yyin;
 
@@ -208,6 +217,7 @@ int main(int argc, char *argv[]) {
 
         fclose(yyin);
 
+        mips.sym_table->print_table();
         mips.print();
 
         return 0;

@@ -29,6 +29,7 @@ white_space [ \t\n]
 multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 
 %%
+{white_space}   {;}
 "main"          {return MAIN;}
 "int"           {return INT;}
 "void"          {return VOID;}
@@ -69,11 +70,9 @@ multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 "-"             {return MINUSOP;}
 "*"             {return MUL_OP;}
 "/"             {return DIV_OP;}
-{numbers}       {yylval.value = atoi(yytext); cout << yylval.value << endl; return INT_NUM;}
-{variable}      {std::string var_name(yytext); yylval.name = &var_name; cout << yylval.name << endl; return ID;}
-{white_space}   {;}
+{numbers}       {yylval.value = atoi(yytext); return INT_NUM;}
+{variable}      {yylval.name = new std::string(yytext); return ID;}
 .               {printError(std::string(yytext));}
-<<EOF>>         {cout << "EOF" << endl; return EOF_;}
 %%
 
 void printError(std::string token) {
