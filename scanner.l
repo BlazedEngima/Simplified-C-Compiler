@@ -1,10 +1,11 @@
 %{
+    #include <stdio.h>
     #include <iostream>
     #include <string>
 
-    // #include "parser.tab.h"
-    // #include "util/AST.hpp"
-    // #include "util/MIPS.hpp"
+    #include "parser.tab.h"
+    #include "util/AST.hpp"
+    #include "util/MIPS.hpp"
     // #include "struct_functions.hpp"
 
     // Debug
@@ -19,14 +20,13 @@
 
 %}
 
+%option yylineno
 %option noyywrap
 
 numbers [0-9]+
 variable [a-zA-Z][a-zA-Z0-9]*
 white_space [ \t\n]
 multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
-
-
 
 %%
 "main"          {return MAIN;}
@@ -62,7 +62,7 @@ multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 "|"             {return OR_OP;}
 "!"             {return NOT_OP;}
 "<"             {return LT;}
-">"             {return RT;}
+">"             {return GT;}
 ","             {return COMMA;}
 "="             {return ASSIGNOP;}
 "+"             {return PLUSOP;}
@@ -70,10 +70,10 @@ multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 "*"             {return MUL_OP;}
 "/"             {return DIV_OP;}
 {numbers}       {yylval.value = atoi(yytext); cout << yylval.value << endl; return INT_NUM;}
-{variable}      {yylval.name = new std::string(yytext); cout << yylval.name << endl; return ID;}
+{variable}      {std::string var_name(yytext); yylval.name = &var_name; cout << yylval.name << endl; return ID;}
 {white_space}   {;}
 .               {printError(std::string(yytext));}
-<<EOF>>         {cout << "EOF" << endl; return 0;}
+<<EOF>>         {cout << "EOF" << endl; return EOF_;}
 %%
 
 void printError(std::string token) {
@@ -82,7 +82,7 @@ void printError(std::string token) {
 }
 
 // Testing
-int main (int argc, char const *argv[]) {
+/* int main (int argc, char const *argv[]) {
     if (argc == 1) {
         while(yylex());
     }
@@ -99,4 +99,4 @@ int main (int argc, char const *argv[]) {
 
         while(yylex());
     }
-}
+} */

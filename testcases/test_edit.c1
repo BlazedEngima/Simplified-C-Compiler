@@ -1,7 +1,1 @@
-// This is a comment
-
-int main() {
-    int a = 5;
-    // Comment 2
-    printf(a);
-}
+int a = 1;

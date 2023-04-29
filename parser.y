@@ -1,14 +1,14 @@
+%requires "3.2"
+
 %code requires{    
     #include <iostream>
     #include <string>
     #include <vector>
-    #include "struct_functions.hpp"
-    // #include "util/symbol_table.hpp"
-    // #include "util/AST.cpp"
-    // #include "util/symbol_table.cpp"
-    // #include "util/MIPS.cpp"
+    #include "util/AST.hpp"
+    #include "util/SymbTable.hpp"
+    #include "util/MIPS.hpp"
 
-    // #define YYDEBUG 1
+    #define YYDEBUG 1
 }
 
 %code top {
@@ -16,164 +16,177 @@
     extern "C" int yyparse(void);
 
     void yyerror(char const *s);
+
+    std::cout << "Code reached here" << std::endl;
+
 }
 
 %code {
-    SymbTable *sym_table = new SymbTable();
-    MIPS *code = new MIPS();   
+    SymbTable sym_table = SymbTable();
+    MIPS mips = MIPS(&sym_table);
 
+    int curr_scope = 0;
 }
 
 %union{
     std::string *name;
-    unsigned int value;
+    int value;
     Node *node;
     std::vector<Node*> *node_vector;
 }
 
-%token INT MAIN VOID BREAK DO ELSE IF WHILE RETURN READ_ WRITE_
-
+%token INT MAIN VOID BREAK DO ELSE IF WHILE RETURN READ_ WRITE_ EOF_
 %token LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE SEMI AND_OP
-%token OR_OP NOT_OP LT RT SHL_OP SHR_OP EQ NOTEQ LTEQ GTEQ ANDAND OROR
+%token OR_OP NOT_OP LT GT SHL_OP SHR_OP EQ NOTEQ LTEQ GTEQ ANDAND OROR
 %token COMMA ASSIGNOP PLUSOP MINUSOP MUL_OP DIV_OP
 
 %token <value> INT_NUM
 %token <name> ID
 
-%type <node_vector> id_list id_list_tail expression_list expr_list_tail
-%type <node> addop expression expression_pre primary
-%type <value> int_literal
+%type <node_vector> declaration_list
+%type <node> declaration
+%type <node> exp exp1 exp2 exp3 exp4 exp5 exp6 exp7 exp8 exp9 exp10 exp11
 
+%right THEN ELSE
 %start prog
 
 %%
-prog            : BEGIN_ statement_list END_;
+prog                : var_declarations statements EOF_;
 
-statement_list  : 
-                | statement statement_list;
+var_declarations    : var_declaration var_declarations;
+                    |; 
 
-statement       : ID ASSIGNOP expression SEMICOLON 
-                {
-                    // Create AST Tree
-                    Node *root = new Node();
-                    Node *new_ID = new Node(*($1));
+var_declaration     : INT declaration_list SEMI {
+                        for (auto it = $2->begin(); it != $2->end(); it++) {
+                            (*it)->gen_declare_code(mips);
+                        }
 
-                    root->right = $3;
-                    root->left = new_ID;
+                        // delete $2;
+                    };
 
-                    root->genCode(sym_table, code);
-                };
-                | READ_ LPAREN id_list RPAREN SEMICOLON 
-                {
-                    code->MIPS_read(sym_table, $3);
-                };
-                | WRITE_ LPAREN expression_list RPAREN SEMICOLON
-                {
-                    code->MIPS_write(sym_table, $3);
-                };
-
-id_list         : ID id_list_tail
-                {
-                    // Add to id_list vector
-                    Node *new_id = new Node(*($1));
-                    $$ = $2;
-                    $$->push_back(new_id);
-                };
-
-id_list_tail    : 
-                {
-                    $$ = new std::vector<Node*>;
-                }
-                | COMMA ID id_list_tail
-                {
-                    // Add to id_list vector
-                    Node *new_id = new Node(*($2));
-                    $$ = $3;
-                    $$->push_back(new_id);
-                };
-
-expression_list : expression expr_list_tail
-                {
-                    $$ = $2;
-                    $$->push_back($1);
-                };
-
-expr_list_tail  : 
-                {
-                    $$ = new std::vector<Node*>;
-                }
-                | COMMA expression expr_list_tail
-                {
-                    $$ = $3;
-                    $$->push_back($2);
-                };
-
-expression      : expression_pre primary
-                {
-                    // Construct Expression Node
-                    if ($1 == nullptr) 
-                        $$ = $2;
-
-                    else {
-                        $1->right = $2;
+declaration_list    : declaration_list COMMA declaration {
+                        $1->push_back($3);
                         $$ = $1;
+                    };
+                    | declaration {
+                        $$ = new std::vector<Node*>;
+                        $$->push_back($1);
+                    };
 
-                    }
-                };
+declaration         : ID ASSIGNOP INT_NUM {
+                        Node *id_node = new Node(_ID_, *($1));
+                        Node *int_node = new Node(_INT_NUM_, $3);
+                        $$ = new Node(_ROOT_);
+                        $$->left = id_node;
+                        $$->right = int_node;
+                    };
+                    | ID LSQUARE INT_NUM RSQUARE {
+                        // To be edited 
+                        $$ = new Node(_ARRAY_, *($1), $3);
+                    };
+                    | ID {
+                        // To be edited
+                        $$ = new Node(_ID_, *($1));
+                    };
 
-expression_pre : expression_pre primary addop 
-                {
-                    if ($1 == nullptr) 
-                        $3->left = $2;
+code_block          : statement
+                    | LBRACE statements RBRACE;
 
-                    else {
-                        $1->right = $2;
-                        $3->left = $1;
-                    }
+statements          : statements statement
+                    | statement;
 
-                    $$ = $3;
-                }
-                | 
-                {
-                    $$ = nullptr;
-                };
+statement           : assign_statement SEMI
+                    | control_statement
+                    | read_write_statement SEMI
+                    | BREAK SEMI
+                    | SEMI;
 
-primary         : ID
-                {
-                    // Create ID
-                    $$ = new Node(*($1));
-                }
-                | int_literal
-                {
-                    // Create INTLITERAL
-                    $$ = new Node($1);
-                }
-                | LPAREN expression RPAREN
-                {
-                    $$ = $2;
-                };
+control_statement   : if_statement
+                    | while_statement
+                    | do_while_statement SEMI
+                    | return_statement SEMI;
 
-int_literal     : INTLITERAL
-                {
-                    $$ = $1;
-                }
-                | MINUSOP INTLITERAL
-                {
-                    $$ = -($2);
-                }
-                ;
+read_write_statement: read_statement
+                    | write_statement;
 
-addop           : PLUSOP
-                {
-                    // Create Operation Node
-                    $$ = new Node(false);
-                }
-                | MINUSOP
-                {
-                    // Create Operation Node
-                    $$ = new Node(true);
-                    // std::cout << "minus op made" <<std::endl;
-                };
+assign_statement    : ID LSQUARE exp RSQUARE ASSIGNOP exp
+                    | ID ASSIGNOP exp;
+
+if_statement        : if_stmt %prec THEN
+                    | if_stmt ELSE code_block;
+
+if_stmt             : IF LPAREN exp RPAREN code_block;
+
+while_statement     : WHILE LPAREN exp RPAREN code_block;
+
+do_while_statement  : DO code_block WHILE LPAREN exp RPAREN;
+
+return_statement    : RETURN;
+
+read_statement      : READ_ LPAREN ID RPAREN;
+
+write_statement     : WRITE_ LPAREN exp RPAREN;
+
+exp                 : exp1;
+
+exp1                : exp1 OROR exp2
+                    | exp2;
+
+exp2                : exp2 ANDAND exp3
+                    | exp3;
+
+exp3                : exp3 OR_OP exp4
+                    | exp4;
+
+exp4                : exp4 AND_OP exp5
+                    | exp5;
+
+exp5                : exp5 EQ exp6
+                    | exp5 NOTEQ exp6
+                    | exp6;
+
+exp6                : exp6 LT exp7
+                    | exp6 GT exp7
+                    | exp6 LTEQ exp7
+                    | exp6 GTEQ exp7
+                    | exp7;
+
+exp7                : exp7 SHL_OP exp8
+                    | exp7 SHR_OP exp8
+                    | exp8;
+
+exp8                : exp8 PLUSOP exp9
+                    | exp8 MINUSOP exp9
+                    | exp9;
+
+exp9                : exp9 MUL_OP exp10
+                    | exp9 DIV_OP exp10
+                    | exp10;
+
+exp10               : NOT_OP exp11 {
+                        // To be edited
+                        $$ = $2;
+                    };
+                    | MINUSOP exp11 {
+                        // To be edited
+                        $$ = $2;
+                    };
+                    | exp11 {
+                        $$ = $1;
+                    };
+
+exp11               : ID LSQUARE exp RSQUARE {
+                        // $$ = new Node($1, $3);
+                    };
+                    | INT_NUM {
+                        // $$ = $1;
+                    };
+                    | ID {
+                        // $$ = $1;
+                    };
+                    | LPAREN exp RPAREN {
+                        // $$ = $2;
+                    };
 %%
 
 int main(int argc, char *argv[]) {
@@ -184,7 +197,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 2) {
         yyparse();
-        code->print();
+        mips.print();
 
         return 0;
 
@@ -195,7 +208,9 @@ int main(int argc, char *argv[]) {
 
         fclose(yyin);
 
-        code->print();
+        mips.print();
+
+        return 0;
     }
 }
 
