@@ -130,41 +130,151 @@ read_statement      : READ_ LPAREN ID RPAREN;
 
 write_statement     : WRITE_ LPAREN exp RPAREN;
 
-exp                 : exp1;
+exp                 : exp1
+                    {
+                        $$ = $1;
+                    };
 
-exp1                : exp1 OROR exp2;
-                    | exp2;
+exp1                : exp1 OROR exp2
+                    {
+                        $$ = new Node(_EXP_, "||");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp2
+                    {
+                        $$ = $1;
+                    };
 
-exp2                : exp2 ANDAND exp3;
-                    | exp3;
+exp2                : exp2 ANDAND exp3
+                    {
+                        $$ = new Node(_EXP_, "&&");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp3
+                    {
+                        $$ = $1;
+                    };
 
-exp3                : exp3 OR_OP exp4;
-                    | exp4;
+exp3                : exp3 OR_OP exp4
+                    {
+                        $$ = new Node(_EXP_, "|");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp4
+                    {
+                        $$ = $1;
+                    };
 
-exp4                : exp4 AND_OP exp5;
-                    | exp5;
+exp4                : exp4 AND_OP exp5
+                    {
+                        $$ = new Node(_EXP_, "&");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp5
+                    {
+                        $$ = $1;
+                    };
 
-exp5                : exp5 EQ exp6;
-                    | exp5 NOTEQ exp6;
-                    | exp6;
+exp5                : exp5 EQ exp6
+                    {
+                        $$ = new Node(_EXP_, "==");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp5 NOTEQ exp6
+                    {
+                        $$ = new Node(_EXP_, "!=");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp6
+                    {
+                        $$ = $1;
+                    };
 
-exp6                : exp6 LT exp7;
-                    | exp6 GT exp7;
-                    | exp6 LTEQ exp7;
-                    | exp6 GTEQ exp7;
-                    | exp7;
+exp6                : exp6 LT exp7
+                    {
+                        $$ = new Node(_EXP_, "<");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp6 GT exp7
+                    {
+                        $$ = new Node(_EXP_, ">");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp6 LTEQ exp7
+                    {
+                        $$ = new Node(_EXP_, "<=");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp6 GTEQ exp7
+                    {
+                        $$ = new Node(_EXP_, ">=");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp7
+                    {
+                        $$ = $1;
+                    };
 
-exp7                : exp7 SHL_OP exp8;
-                    | exp7 SHR_OP exp8;
-                    | exp8;
+exp7                : exp7 SHL_OP exp8
+                    {
+                        $$ = new Node(_EXP_, "<<");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp7 SHR_OP exp8
+                    {
+                        $$ = new Node(_EXP_, ">>");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp8
+                    {
+                        $$ = $1;
+                    };
 
-exp8                : exp8 PLUSOP exp9;
-                    | exp8 MINUSOP exp9;
-                    | exp9;
+exp8                : exp8 PLUSOP exp9
+                    {
+                        $$ = new Node(_EXP_, "+");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp8 MINUSOP exp9
+                    {
+                        $$ = new Node(_EXP_, "-");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp9
+                    {
+                        $$ = $1;
+                    };
 
-exp9                : exp9 MUL_OP exp10;
-                    | exp9 DIV_OP exp10;
-                    | exp10;
+exp9                : exp9 MUL_OP exp10
+                    {
+                        $$ = new Node(_EXP_, "*");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp9 DIV_OP exp10
+                    {
+                        $$ = new Node(_EXP_, "/");
+                        $$->left = $1;
+                        $$->right = $3;
+                    };
+                    | exp10
+                    {
+                        $$ = $1;
+                    };
 
 exp10               : NOT_OP exp11
                     {
