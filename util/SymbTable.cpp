@@ -4,28 +4,33 @@ SymbTable::SymbTable() {
     this->idx = 1;
 }
 
-const int SymbTable::get_symbol(std::string id) {
+const int SymbTable::get_symbol(const std::string &id) {
     auto it = this->sym_table.find(id);
 
     // Needs to be refactored with proper variable scoping
     if (it != this->sym_table.end())
         return it->second;
 
+    std::cout << id << " Undeclared variable" << std::endl;
+    exit(1);
     return -1;
 }
 
-int SymbTable::place_symbol(std::string id) {
+int SymbTable::place_symbol(const std::string &id) {
 
     auto it = this->sym_table.find(id);
-
+    
+    // Checks to see if it is already in the map
     if (it != this->sym_table.end())
         return -1;
 
-    if (!(this->free_mem.empty())) {
-        this->sym_table.emplace(id, *(this->free_mem.begin()));
+    // if (!(this->free_mem_addr.empty())) {
+    //     int addr = *(this->free_mem_addr.begin());
+    //     this->sym_table.emplace(id, addr);
+    //     this->free_mem_addr.erase(addr);
         
-        return *(this->free_mem.begin());
-    }
+    //     return addr;
+    // }
 
     this->sym_table.emplace(id, this->idx);
     this->idx++;
@@ -33,13 +38,30 @@ int SymbTable::place_symbol(std::string id) {
     return this->idx;
 }
 
-void SymbTable::free_symbol(std::string id) {
-    auto it = this->sym_table.find(id);
+void SymbTable::free_temp_symbol(int id) {
+    this->free_temp_symbols.insert(id);
+}
 
-    if (it == this->sym_table.end())
-        return;
+std::string SymbTable::place_temp_symbol() {
+    std::string temp_name;
 
-    this->free_mem.insert(it->second);
+    if (this->free_temp_symbols.empty()) {
+        temp_name = std::to_string(this->idx);
+        this->temp_symbols.insert(this->idx);
+        this->place_symbol(temp_name);
+
+        return temp_name;
+    }
+
+    int addr = *(this->free_temp_symbols.begin());
+    temp_name = std::to_string(addr);
+    this->free_temp_symbols.erase(addr);
+
+    return temp_name;
+}
+
+bool SymbTable::is_temp_symbol(int val) {
+    return this->temp_symbols.count(val) > 0;
 }
 
 // Debug

@@ -39,7 +39,7 @@
 %token <name> ID
 
 %type <node_vector> declaration_list
-%type <node> declaration assign_statement
+%type <node> declaration assign_statement write_statement read_statement read_write_statement
 %type <node> exp exp1 exp2 exp3 exp4 exp5 exp6 exp7 exp8 exp9 exp10 exp11
 
 
@@ -47,8 +47,7 @@
 %start prog
 
 %%
-prog                : var_declarations statements
-                    | var_declarations;
+prog                : var_declarations statements;
 
 var_declarations    : var_declaration var_declarations;
                     | %empty ; 
@@ -77,7 +76,7 @@ declaration         : ID ASSIGNOP INT_NUM
                     {
                         Node *id_node = new Node(_ID_, *($1));
                         Node *int_node = new Node(_INT_NUM_, $3);
-                        $$ = new Node(_ROOT_);
+                        $$ = new Node(_ROOT_, _ASSIGN_OP_);
                         $$->left = id_node;
                         $$->right = int_node;
                     };
@@ -101,8 +100,14 @@ statements          : statements statement;
                     | statement;
 
 statement           : assign_statement SEMI
+                    {
+                        $1->gen_code(mips);
+                    };
                     | control_statement;
-                    | read_write_statement SEMI;
+                    | read_write_statement SEMI
+                    {
+                        $1->gen_code(mips);
+                    };
                     | BREAK SEMI;
                     | SEMI;
 
@@ -111,12 +116,18 @@ control_statement   : if_statement;
                     | do_while_statement SEMI;
                     | return_statement SEMI;
 
-read_write_statement: read_statement;
-                    | write_statement;
+read_write_statement: read_statement
+                    {
+                        $$ = $1;  
+                    };
+                    | write_statement
+                    {
+                        $$ = $1;
+                    };
 
 assign_statement    : ID LSQUARE exp RSQUARE ASSIGNOP exp
                     {
-                        $$ = new Node(_ROOT_);
+                        $$ = new Node(_ROOT_, _ASSIGN_OP_);
 
                         // Make array node
                         Node *array_node = new Node(_ARRAY_);
@@ -124,13 +135,12 @@ assign_statement    : ID LSQUARE exp RSQUARE ASSIGNOP exp
                         array_node->left = id_node;
                         array_node->right = $3;
 
-
                         $$->left = array_node;
                         $$->right = $6; 
                     };
                     | ID ASSIGNOP exp
                     {
-                        $$ = new Node(_ROOT_);
+                        $$ = new Node(_ROOT_, _ASSIGN_OP_);
 
                         Node *id_node = new Node(_ID_, *($1));
 
@@ -149,9 +159,18 @@ do_while_statement  : DO code_block WHILE LPAREN exp RPAREN;
 
 return_statement    : RETURN;
 
-read_statement      : READ_ LPAREN ID RPAREN;
+read_statement      : READ_ LPAREN ID RPAREN
+                    {
+                        Node *id_node = new Node(_ID_, *($3));
+                        $$ = new Node(_ROOT_, _READ);
+                        $$->right = id_node;
+                    };
 
-write_statement     : WRITE_ LPAREN exp RPAREN;
+write_statement     : WRITE_ LPAREN exp RPAREN
+                    {
+                        $$ = new Node(_ROOT_, _WRITE);
+                        $$->right = $3;
+                    };
 
 exp                 : exp1
                     {
@@ -354,7 +373,7 @@ int main(int argc, char *argv[]) {
 
         fclose(yyin);
 
-        mips.print_id_list();
+        /* mips.print_id_list(); */
         mips.sym_table->print_table();
         mips.print();
 

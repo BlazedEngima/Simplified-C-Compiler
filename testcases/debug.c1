@@ -3,4 +3,6 @@ int d[5];
 int e;
 int b = 1;
 
-d[0] = 0;
+e = !(a - b);
+
+printf(e);
