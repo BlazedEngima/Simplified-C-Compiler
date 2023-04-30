@@ -45,6 +45,6 @@ void SymbTable::free_symbol(std::string id) {
 // Debug
 void SymbTable::print_table() {
     for (auto const &pair : this->sym_table) {
-        std::cout << "{" << pair.first << " : " << pair.second << "}" << std::endl;
+        std::cout << "{" << pair.first << "\t: " << pair.second << "}" << std::endl;
     }
 }
