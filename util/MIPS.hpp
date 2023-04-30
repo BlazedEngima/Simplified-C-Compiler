@@ -13,12 +13,14 @@ class MIPS {
 
     public:
         SymbTable *sym_table;
-        MIPS(SymbTable *sym_table);
+        std::vector<std::string> *declared_id;
+        MIPS(SymbTable *sym_table, std::vector<std::string> *declared_id);
 
         void load_int(const std::string &reg, int num);
         void load_reg(const std::string &reg, int addr);
         void save_reg(const std::string &reg, int addr);
-
+        
+        void print_id_list();
         void print();
 };
 

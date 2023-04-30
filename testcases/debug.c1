@@ -1,2 +1,6 @@
 int a = 1, c = 1;
 int b = 1;
+int d[5];
+int e;
+
+d[0] = 0;

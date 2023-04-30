@@ -25,7 +25,7 @@
 
 numbers [0-9]+
 variable [a-zA-Z][a-zA-Z0-9]*
-white_space [ \t\n]
+white_space [ \t\n]*
 multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 
 %%
@@ -72,7 +72,7 @@ multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 "/"             {return DIV_OP;}
 {numbers}       {yylval.value = atoi(yytext); return INT_NUM;}
 {variable}      {yylval.name = new std::string(yytext); return ID;}
-.               {printError(std::string(yytext));}
+.               {;}
 %%
 
 void printError(std::string token) {

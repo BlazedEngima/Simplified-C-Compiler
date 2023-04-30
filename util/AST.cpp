@@ -32,14 +32,6 @@ Node::Node(node_type _type, std::string str) : type(_type) {
 
 }
 
-Node::Node(node_type _type, std::string id, int num) : type(_type) {
-    this->var_name = id;
-    this->int_val = num;
-
-    this->left = nullptr;
-    this->right = nullptr;
-}
-
 Node::~Node() {delete this;}
 
 
@@ -47,14 +39,30 @@ int Node::gen_declare_code(MIPS &code) {
 
     std::string reg1 = "$2", reg2 = "$3", reg3 = "$8";
     
-    if (this->type != _ROOT_) {return -1;}
+    // If assign type node
+    if (this->type == _ROOT_) {
+        code.declared_id->push_back(this->left->var_name);
 
-    if (this->left->type == _ID_ && this->right->type == _INT_NUM_) {
         code.sym_table->place_symbol(this->left->var_name);
 
         code.load_int(reg1, this->right->int_val);
         code.save_reg(reg1, code.sym_table->get_symbol(this->left->var_name));
 
+        return 0;
+    }
+
+    else if (this->type == _ARRAY_) {
+        for (size_t i = 0; i < this->right->int_val; i++) {
+            std::string temp = this->left->var_name + "[" + std::to_string(i) + "]";
+            code.declared_id->push_back(temp);
+        }
+        
+        return 0;
+    }
+
+    else if (this->type == _ID_) {
+        code.declared_id->push_back(this->var_name);
+        
         return 0;
     }
 

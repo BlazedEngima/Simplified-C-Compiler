@@ -25,7 +25,6 @@ class Node {
         Node(node_type _type);
         Node(node_type _type, int value);
         Node(node_type _type, std::string str);
-        Node(node_type _type, std::string id, int num);
         ~Node();
 
         int gen_declare_code(MIPS &code);

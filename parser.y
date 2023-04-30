@@ -2,11 +2,10 @@
     #include <iostream>
     #include <string>
     #include <vector>
+    #include <assert.h>
     #include "util/AST.hpp"
     #include "util/SymbTable.hpp"
     #include "util/MIPS.hpp"
-
-    #define YYDEBUG 1
 }
 
 %code top {
@@ -18,7 +17,8 @@
 
 %code {
     SymbTable sym_table = SymbTable();
-    MIPS mips = MIPS(&sym_table);
+    std::vector<std::string> declared_id;
+    MIPS mips = MIPS(&sym_table, &declared_id);
 
     int curr_scope = 0;
 }
@@ -46,7 +46,7 @@
 %start prog
 
 %%
-prog                : var_declarations;
+prog                : var_declarations statements;
 
 var_declarations    : var_declaration var_declarations;
                     | %empty ; 
@@ -81,13 +81,14 @@ declaration         : ID ASSIGNOP INT_NUM
                     };
                     | ID LSQUARE INT_NUM RSQUARE 
                     {
-                        // To be edited 
-                        mips.sym_table->place_symbol(*($1));
-                        $$ = new Node(_ARRAY_, *($1), $3);
+                        Node *id_node = new Node(_ID_, *($1));
+                        Node *int_node = new Node(_INT_NUM_, $3);
+                        $$ = new Node(_ARRAY_);
+                        $$->left = id_node;
+                        $$->right = int_node;
                     };
                     | ID 
                     {
-                        // To be edited
                         $$ = new Node(_ID_, *($1));
                     };
 
@@ -173,6 +174,8 @@ exp10               : NOT_OP exp11
                     | MINUSOP exp11 
                     {
                         // To be edited
+                        assert($2->type == _INT_NUM_);
+                        $2->int_val = -1 * $2->int_val;
                         $$ = $2;
                     };
                     | exp11 
@@ -182,19 +185,22 @@ exp10               : NOT_OP exp11
 
 exp11               : ID LSQUARE exp RSQUARE
                     {
-                        // $$ = new Node($1, $3);
+                        Node *id_node = new Node(_ID_, *($1));
+                        $$ = new Node(_ARRAY_);
+                        $$->left = id_node;
+                        $$->right = $3;
                     };
                     | INT_NUM
                     {
-                        // $$ = $1;
+                        $$ = new Node(_INT_NUM_, $1);
                     };
                     | ID
                     {
-                        // $$ = $1;
+                        $$ = new Node(_ID_, *($1));
                     };
                     | LPAREN exp RPAREN
                     {
-                        // $$ = $2;
+                        $$ = $2;
                     };
 %%
 
@@ -217,6 +223,7 @@ int main(int argc, char *argv[]) {
 
         fclose(yyin);
 
+        mips.print_id_list();
         mips.sym_table->print_table();
         mips.print();
 
