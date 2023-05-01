@@ -43,9 +43,9 @@
 %token <value> INT_NUM
 %token <name> ID
 
-%type <node_vector> declaration_list statements
+%type <node_vector> declaration_list
 %type <node> declaration assign_statement write_statement read_statement read_write_statement
-%type <node> if_statement if_stmt code_block statement
+%type <node> if_statement if_stmt
 %type <node> exp exp1 exp2 exp3 exp4 exp5 exp6 exp7 exp8 exp9 exp10 exp11
 
 
