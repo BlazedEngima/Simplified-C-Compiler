@@ -43,8 +43,9 @@
 %token <value> INT_NUM
 %token <name> ID
 
-%type <node_vector> declaration_list
+%type <node_vector> declaration_list statements
 %type <node> declaration assign_statement write_statement read_statement read_write_statement
+%type <node> if_statement if_stmt code_block statement
 %type <node> exp exp1 exp2 exp3 exp4 exp5 exp6 exp7 exp8 exp9 exp10 exp11
 
 
@@ -156,7 +157,10 @@ assign_statement    : ID LSQUARE exp RSQUARE ASSIGNOP exp
 if_statement        : if_stmt %prec THEN;
                     | if_stmt ELSE code_block;
 
-if_stmt             : IF LPAREN exp RPAREN code_block;
+if_stmt             : IF LPAREN exp RPAREN code_block
+                    {
+
+                    };
 
 while_statement     : WHILE LPAREN exp RPAREN code_block;
 
