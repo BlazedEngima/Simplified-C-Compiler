@@ -1,9 +1,10 @@
 #include "MIPS.hpp"
 
-MIPS::MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *labels) {
+MIPS::MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *entry_labels, LabelStack *exit_labels) {
     this->sym_table = sym_table;
     this->declared_id = declared_id;
-    this->labels = labels;
+    this->entry_labels = entry_labels;
+    this->exit_labels = exit_labels;
 
     this->code.push_back("main:");
     this->code.push_back("\tmove $fp, $sp");

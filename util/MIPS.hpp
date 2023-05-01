@@ -21,8 +21,9 @@ class MIPS {
     public:
         SymbTable *sym_table;
         Map *declared_id;
-        LabelStack *labels;
-        MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *labels);
+        LabelStack *entry_labels;
+        LabelStack *exit_labels;
+        MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *entry_labels, LabelStack *exit_labels);
 
         void load_int(const std::string &reg, int num);
         std::string load_sym(const std::string &reg, const std::string &source);

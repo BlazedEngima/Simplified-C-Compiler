@@ -19,8 +19,9 @@
 
     SymbTable sym_table = SymbTable();
     Map declared_id;
-    LabelStack labels;
-    MIPS mips = MIPS(&sym_table, &declared_id, &labels);
+    LabelStack entry_labels;
+    LabelStack exit_labels;
+    MIPS mips = MIPS(&sym_table, &declared_id, &entry_labels, &exit_labels);
 
     int curr_scope = 0;
 }
