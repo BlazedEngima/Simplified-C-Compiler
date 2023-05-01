@@ -1,6 +1,6 @@
 #include "MIPS.hpp"
 
-MIPS::MIPS(SymbTable *sym_table, std::vector<std::string> *declared_id) {
+MIPS::MIPS(SymbTable *sym_table, symbol_table *declared_id) {
     this->sym_table = sym_table;
     this->declared_id = declared_id;
 
@@ -203,8 +203,8 @@ void MIPS::clear_reg(const std::string &reg) {
 }
 
 void MIPS::print_id_list() {
-    for (auto const &elem : *(this->declared_id)) {
-        std::cout << elem << std::endl;
+    for (auto const &pair : *(this->declared_id)) {
+        std::cout << "{" << pair.first << "\t: " << pair.second << "}" << std::endl;
     }
 }
 void MIPS::print() {

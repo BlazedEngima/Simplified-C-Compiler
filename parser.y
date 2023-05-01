@@ -16,13 +16,9 @@
 }
 
 %code {
-    struct variable {
-        int value = 0;
-        std::string name;
-    };
 
     SymbTable sym_table = SymbTable();
-    std::vector<std::string> declared_id;
+    symbol_table declared_id;
     MIPS mips = MIPS(&sym_table, &declared_id);
 
     int curr_scope = 0;

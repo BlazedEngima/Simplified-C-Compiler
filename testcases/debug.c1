@@ -1,7 +1,11 @@
 int a = 3;
 int b = 4;
 int c = 2;
-int d[4];
-d[3] = 5;
+int d[5];
+int e;
 
-printf(a * b / c - d[3]);
+d[2] = 2;
+d[4] = 7;
+e = d[(a + 1) / 2];
+
+printf(e);

@@ -80,7 +80,7 @@ int Node::gen_declare_code(MIPS &code) {
     if (this->type == _ROOT_) {
         assert(this->right->type == _INT_NUM_);
 
-        code.declared_id->push_back(this->left->var_name);
+        code.declared_id->emplace(this->left->var_name, this->right->int_val);
         code.sym_table->place_symbol(this->left->var_name);
 
         code.load_int(reg1, this->right->int_val);
@@ -94,7 +94,7 @@ int Node::gen_declare_code(MIPS &code) {
         for (size_t i = 0; i < this->right->int_val; i++) {
             std::string temp = this->left->var_name + "[" + std::to_string(i) + "]";
             code.sym_table->place_symbol(temp);
-            code.declared_id->push_back(temp);
+            code.declared_id->emplace(temp, 0);
         }
         
         return 0;
@@ -102,7 +102,7 @@ int Node::gen_declare_code(MIPS &code) {
 
     else if (this->type == _ID_) {
         code.sym_table->place_symbol(this->var_name);
-        code.declared_id->push_back(this->var_name);
+        code.declared_id->emplace(this->var_name, 0);
         
         return 0;
     }
@@ -188,6 +188,15 @@ int Node::gen_code(MIPS &code) {
 
         case _ID_: {
             assert(this->left == nullptr && this->right == nullptr);
+
+            auto it = code.declared_id->find(this->var_name);
+
+            if (it != code.declared_id->end())
+                this->int_val = code.declared_id->at(this->var_name);
+            else {
+                std::cout << "Error, variable not declared" << std::endl;
+                exit(1);
+            }
             return code.sym_table->get_symbol(this->var_name);
             break;
         }
@@ -253,7 +262,8 @@ int Node::gen_code(MIPS &code) {
             if (code.sym_table->is_temp_symbol(right_addr))
                 code.sym_table->free_temp_symbol(right_addr);
 
-            // this->int_val = this->handle_expression(this->left->int_val, this->right->int_val);
+            this->int_val = this->handle_expression(this->left->int_val, this->right->int_val);
+            std::cout << this->int_val << std::endl;
 
             if (left_addr == -1 && right_addr == -1)
                 return -1;

@@ -18,8 +18,8 @@ class MIPS {
 
     public:
         SymbTable *sym_table;
-        std::vector<std::string> *declared_id;
-        MIPS(SymbTable *sym_table, std::vector<std::string> *declared_id);
+        symbol_table *declared_id;
+        MIPS(SymbTable *sym_table, symbol_table *declared_id);
 
         void load_int(const std::string &reg, int num);
         std::string load_sym(const std::string &reg, const std::string &source);
