@@ -38,7 +38,8 @@ class MIPS {
         void addiu(const std::string &dest_reg, const std::string &source_reg, int num);
         void addu(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
         void subu(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
-        void sll(const std::string &dest_reg, const std::string &source_reg, int num);
+        void sll(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg);
+        void sra(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg);
         void syscall();
         void read_op();
         void write_op();

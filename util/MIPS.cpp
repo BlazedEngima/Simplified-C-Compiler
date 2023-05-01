@@ -54,8 +54,12 @@ void MIPS::subu(const std::string &dest_reg, const std::string &source_reg_1, co
     this->code.push_back("\tsubu " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
 }
 
-void MIPS::sll(const std::string &dest_reg, const std::string &source_reg, int num) {
-    this->code.push_back("\tsll " + dest_reg + ", " + source_reg + std::to_string(num));
+void MIPS::sll(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg) {
+    this->code.push_back("\tsll " + dest_reg + ", " + source_reg + ", " + num_or_reg);
+}
+
+void MIPS::sra(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg) {
+    this->code.push_back("\tsra " + dest_reg + ", " + source_reg + ", " + num_or_reg);
 }
 
 void MIPS::syscall() {
@@ -103,8 +107,10 @@ void MIPS::reg_int_op(const std::string &dest_reg, const std::string &source_reg
         case _GTEQ_:
             break;
         case _SHL_OP_:
+            this->sll(dest_reg, source_reg, std::to_string(num));
             break;
         case _SHR_OP_:
+            this->sra(dest_reg, source_reg, std::to_string(num));
             break;
         case _PLUSOP_: 
             this->addiu(dest_reg, source_reg, num);
@@ -151,8 +157,10 @@ void MIPS::reg_reg_op(const std::string &dest_reg, const std::string &source_reg
         case _GTEQ_:
             break;
         case _SHL_OP_:
+            this->sll(dest_reg, source_reg_1, source_reg_2);
             break;
         case _SHR_OP_:
+            this->sra(dest_reg, source_reg_1, source_reg_2);
             break;
         case _PLUSOP_:
             this->addu(dest_reg, source_reg_1, source_reg_2);

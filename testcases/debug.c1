@@ -1,8 +1,5 @@
-int a = 1, c = 1;
-int d[5];
-int e;
-int b = 1;
+int a = 1;
+int b = 2;
+int c = 3;
 
-e = !(a - b);
-
-printf(e);
+printf(a + b + c);

@@ -73,12 +73,15 @@ int Node::gen_declare_code(MIPS &code) {
     
     // If assign type node
     if (this->type == _ROOT_) {
+        assert(this->right->type == _INT_NUM_);
+
         code.declared_id->push_back(this->left->var_name);
         code.sym_table->place_symbol(this->left->var_name);
 
         code.load_int(reg1, this->right->int_val);
         code.save_reg(reg1, code.sym_table->get_symbol(this->left->var_name));
-
+        
+        this->left->int_val = this->right->int_val;
         return 0;
     }
 
@@ -103,221 +106,389 @@ int Node::gen_declare_code(MIPS &code) {
 
 }
 
-Return_val Node::gen_code(MIPS &code) {
-
+int Node::gen_code(MIPS &code) {
     std::string reg1 = "$2", reg2 = "$3", reg3 = "$8";
 
     switch (this->type) {
-        case _ID_:  {
-            // returns address of ID node
-            assert(this->left == nullptr && this->right == nullptr);
-            return std::make_tuple(addr, code.sym_table->get_symbol(this->var_name));
-            break;
-        }
-
-        case _INT_NUM_: {
-            // returns the integer value of the INT_NUM node
-            assert(this->left == nullptr && this->right == nullptr);
-            return std::make_tuple(int_num, this->int_val);
-            break;
-        }
-
-        case _ARRAY_:
-            // generate code for ARRAY node
-            assert(this->left->type == _ID_);
-            Return_type right_ret_type;
-            int right_val;
-
-            std::tie(right_ret_type, right_val) = this->right->gen_code(code);
-            
-            if (right_ret_type == int_num) {
-                std::string id = this->left->var_name + "[" + std::to_string(right_val) + "]";
-                return std::make_tuple(addr, code.sym_table->get_symbol(id));
-            } 
-            
-            code.load_addr(reg1, right_val);
-            code.sll(reg1, reg1, 2);
-            break;
-
-        case _EXP_: {
-            Return_type left_ret_type, right_ret_type;
-            int left_val, right_val;
-
-            if (this->left == nullptr) {
-                assert(this->right != nullptr);
-                std::tie(right_ret_type, right_val) = this->right->gen_code(code);
-
-                if (this->op == _MINUSOP_) {
-                    if (right_ret_type == int_num)
-                        return std::make_tuple(int_num, -right_val);
-
-                    code.load_addr(reg1, right_val);
-                    code.reg_reg_op(reg1, "$0", reg1, this->op);
-                    std::string temp_symbol = code.sym_table->place_temp_symbol();
-
-                    int new_addr = code.sym_table->get_symbol(temp_symbol);
-                    code.save_reg(reg1, new_addr);
-
-                    if (code.sym_table->is_temp_symbol(right_val))
-                        code.sym_table->free_temp_symbol(right_val);
-
-                    return std::make_tuple(addr, new_addr);
-
-                } else if (this->op == _NOT_OP_) {
-                    if (right_ret_type == int_num) {
-                        code.reg_int_op(reg1, reg1, right_val, this->op);
-                        return std::make_tuple(int_num, !right_val);
-                    }
-
-                    code.load_addr(reg1, right_val);
-                    code.reg_reg_op(reg1, reg1, reg1, this->op);
-                    std::string temp_symbol = code.sym_table->place_temp_symbol();
-
-                    int new_addr = code.sym_table->get_symbol(temp_symbol);
-                    code.save_reg(reg1, new_addr);
-
-                    if (code.sym_table->is_temp_symbol(right_val))
-                        code.sym_table->free_temp_symbol(right_val);
-
-                    return std::make_tuple(addr, new_addr);
-                }
-
-                return std::make_tuple(error, -1);
-
-            } else if (this->right == nullptr) {
-                assert(this->left != nullptr);
-                return this->left->gen_code(code);
-
-            }
-
-            std::tie(right_ret_type, right_val) = this->right->gen_code(code);
-            std::tie(left_ret_type, left_val) = this->left->gen_code(code);
-
-            if (left_ret_type == error || right_ret_type == error) {
-                std::cout << "Code generation error: node return type error" << std::endl;
-                exit(1);
-            }
-
-            // Return_type new_type = static_cast<Return_type>(left_ret_type || right_ret_type);
-            Return_type new_type = (left_ret_type == addr || right_ret_type == addr) ? addr : int_num;
-
-            std::cout << new_type << std::endl;
-
-            // generate code for EXP node
-            if (left_ret_type == int_num && right_ret_type == int_num) {
-                int left_val = this->left->int_val;
-                int right_val = this->right->int_val;
-                
-                return std::make_tuple(new_type, this->handle_expression(left_val, right_val));
-
-            } else if (left_ret_type == addr && right_ret_type == int_num) {
-                code.load_addr(reg1, left_val);
-                code.reg_int_op(reg2, reg1, right_val, this->op);
-                std::string temp_symbol = code.sym_table->place_temp_symbol();
-
-                int addr = code.sym_table->get_symbol(temp_symbol);
-                code.save_reg(reg2, addr);
-
-                if (code.sym_table->is_temp_symbol(left_val))
-                    code.sym_table->free_temp_symbol(left_val);
-
-                return std::make_tuple(new_type, addr);
-
-            } else if (left_ret_type == int_num && right_ret_type == addr) {    
-                code.load_addr(reg1, right_val);
-                code.reg_int_op(reg2, reg1, left_val, this->op);
-                std::string temp_symbol = code.sym_table->place_temp_symbol();
-
-                int addr = code.sym_table->get_symbol(temp_symbol);
-                code.save_reg(reg2, addr);
-
-                if (code.sym_table->is_temp_symbol(right_val))
-                    code.sym_table->free_temp_symbol(right_val);
-
-                return std::make_tuple(new_type, addr);
-
-            } else if (left_ret_type == addr && right_ret_type == addr) {
-                code.load_addr(reg1, left_val);
-                code.load_addr(reg2, right_val);
-                code.reg_reg_op(reg3, reg1, reg2, this->op);
-                std::string temp_symbol = code.sym_table->place_temp_symbol();
-
-                int addr = code.sym_table->get_symbol(temp_symbol);
-                code.save_reg(reg3, addr);
-                code.clear_reg(reg3);
-
-                if (code.sym_table->is_temp_symbol(left_val))
-                    code.sym_table->free_temp_symbol(left_val);
-
-                if (code.sym_table->is_temp_symbol(right_val))
-                    code.sym_table->free_temp_symbol(right_val);    
-
-                return std::make_tuple(new_type, addr);
-
-            }
-
-            return std::make_tuple(error, -1);
-            break;
-        }
-
         case _ROOT_: {
-            // generate code for ROOT node
             assert(this->op == _ASSIGN_OP_ || this->op == _READ || this->op == _WRITE || this->op == _IF || this->op == _ELSE || this->op == _DO || this->op == _WHILE);
-
-            Return_type left_ret_type, right_ret_type;
-            int left_val, right_val;
-
+            
             switch (this->op) {
                 case _ASSIGN_OP_: {
-                    std::tie(right_ret_type, right_val) = this->right->gen_code(code);
-                    std::tie(left_ret_type, left_val) = this->left->gen_code(code);
+                    // this->left->int_val = this->right->int_val;
+                    // std::cout << this->left->int_val << std::endl;
+                    int left_addr = this->left->gen_code(code);
+                    int right_addr = this->right->gen_code(code);
 
-                    if (right_ret_type == addr) {
-                        code.load_addr(reg1, right_val);
+                    if (code.sym_table->is_temp_symbol(right_addr))
+                        code.sym_table->free_temp_symbol(right_addr);
+                    if (code.sym_table->is_temp_symbol(left_addr)) 
+                        code.sym_table->free_temp_symbol(left_addr);
+                    
+                    if (right_addr != -1) 
+                        code.load_addr(reg1, right_addr);
+                    else 
+                        code.load_int(reg1, this->right->int_val);
+                    
+                    code.save_reg(reg1, left_addr);
 
-                        code.save_reg(reg1, code.sym_table->get_symbol(this->left->var_name));
-                        return std::make_tuple(int_num, 0);
-
-                    } else if (right_ret_type == int_num) {
-                        code.load_int(reg1, right_val);
-
-                        code.save_reg(reg1, code.sym_table->get_symbol(this->left->var_name));
-                        return std::make_tuple(int_num, 0);
-                    }
-
+                    return 0;
                     break;
                 }
 
                 case _READ: {
                     code.read_op();
-                    code.load_addr(reg1, code.sym_table->get_symbol(this->right->var_name));
+                    code.save_reg(reg1, code.sym_table->get_symbol(this->right->var_name));
+                    return 0;
                     break;
                 }
 
-                case _WRITE:
+                case _WRITE: {
+
+                    int right_addr = this->right->gen_code(code);
+
+                    if (code.sym_table->is_temp_symbol(right_addr))
+                        code.sym_table->free_temp_symbol(right_addr);
+                    
+                    if (right_addr != -1)
+                        code.load_addr("$4", right_addr);
+                    else
+                        code.load_int("$4", this->right->int_val);
+                        
                     code.write_op();
-
-                    std::tie(right_ret_type, right_val) = this->right->gen_code(code);
-
-                    if (right_ret_type == addr) {
-                        code.load_addr("$4", right_val);
-                        code.syscall();
-                        return std::make_tuple(int_num, 0);
-
-                    } else if (right_ret_type == int_num) {
-                        code.load_int("$4", right_val);
-                        code.syscall();
-                        return std::make_tuple(int_num, 0);
-
-                    }
+                    code.syscall();
+                    return 0;
                     break;
+                }
 
                 default:
-                    return std::make_tuple(error, -1);
+                    return -2;
                     break;
             }
 
-            return std::make_tuple(error, -1);
+            return -2;
+        }
+
+        case _ID_: {
+            assert(this->left == nullptr && this->right == nullptr);
+            return code.sym_table->get_symbol(this->var_name);
+            break;
+        }
+
+        case _INT_NUM_: {
+            assert(this->left == nullptr && this->right == nullptr);
+            return -1;
+            break;
+        }
+
+        case _ARRAY_: {
+            assert(this->left->type == _ID_);
+            int right_addr = this->right->gen_code(code);
+            
+            if (code.sym_table->is_temp_symbol(right_addr))
+                code.sym_table->free_temp_symbol(right_addr);
+
+            std::string id = this->left->var_name + "[" + std::to_string(this->right->int_val) + "]";
+            return code.sym_table->get_symbol(id);
+            break;
+        }
+
+        case _EXP_: {
+            int left_addr, right_addr;
+
+            if (this->left == nullptr) {
+                assert(this->right != nullptr);
+                right_addr = this->right->gen_code(code);
+                
+                if (this->op == _MINUSOP_)
+                    this->int_val = -1 * this->right->int_val;
+                else if (this->op == _NOT_OP_)
+                    this->int_val = !(this->right->int_val);
+
+                if (code.sym_table->is_temp_symbol(right_addr))
+                    code.sym_table->free_temp_symbol(right_addr);
+
+                if (right_addr != -1) {
+                    code.load_addr(reg1, right_addr);
+                    if (this->op == _MINUSOP_)
+                        code.reg_reg_op(reg1, "$0", reg1, this->op);
+                    else if (this->op == _NOT_OP_)
+                        code.reg_reg_op(reg1, reg1, reg1, this->op);
+
+                    std::string temp_symbol = code.sym_table->place_temp_symbol();
+                    int new_addr = code.sym_table->get_symbol(temp_symbol);
+                    code.save_reg(reg1, new_addr);
+
+                    return new_addr;
+
+                } else {
+                    if (this->op == _NOT_OP_) 
+                        code.reg_int_op(reg1, reg1, this->right->int_val, this->op);
+                    
+                    return -1;
+                }
+            } // Add if right child is ever null
+
+            left_addr = this->left->gen_code(code);
+            right_addr = this->right->gen_code(code);
+
+            if (code.sym_table->is_temp_symbol(left_addr))
+                    code.sym_table->free_temp_symbol(left_addr);
+            if (code.sym_table->is_temp_symbol(right_addr))
+                code.sym_table->free_temp_symbol(right_addr);
+
+            this->int_val = this->handle_expression(this->left->int_val, this->right->int_val);
+
+            std::cout << this->left->int_val << std::endl;
+            std::cout << this->right->int_val << std::endl;
+            std::cout << this->int_val << std::endl;
+
+            if (left_addr == -1 && right_addr == -1)
+                return -1;
+            
+            std::string temp_symbol = code.sym_table->place_temp_symbol();
+            int new_addr = code.sym_table->get_symbol(temp_symbol);
+
+            if (left_addr != -1 && right_addr != -1) {
+                code.load_addr(reg1, left_addr);
+                code.load_addr(reg2, right_addr);
+                code.reg_reg_op(reg3, reg1, reg2, this->op);
+                code.save_reg(reg3, new_addr);
+                // code.clear_reg(reg3);
+
+                return new_addr;
+            } else if (left_addr != -1 && right_addr == -1) {
+                code.load_addr(reg1, left_addr);
+                code.reg_int_op(reg2, reg1, this->right->int_val, this->op);
+                code.save_reg(reg2, new_addr);
+
+                return new_addr;
+            } else if (left_addr == -1 && right_addr != -1) {
+                code.load_addr(reg1, right_addr);
+                code.reg_int_op(reg2, reg1, this->left->int_val, this->op);
+                code.save_reg(reg2, new_addr);
+
+                return new_addr;
+            }
         }
     }
 }
+
+// Return_val Node::gen_code(MIPS &code) {
+
+//     std::string reg1 = "$2", reg2 = "$3", reg3 = "$8";
+
+//     switch (this->type) {
+//         case _ID_:  {
+//             // returns address of ID node
+//             assert(this->left == nullptr && this->right == nullptr);
+//             return std::make_tuple(addr, code.sym_table->get_symbol(this->var_name));
+//             break;
+//         }
+
+//         case _INT_NUM_: {
+//             // returns the integer value of the INT_NUM node
+//             assert(this->left == nullptr && this->right == nullptr);
+//             return std::make_tuple(int_num, this->int_val);
+//             break;
+//         }
+
+//         case _ARRAY_:
+//             // generate code for ARRAY node
+//             assert(this->left->type == _ID_);
+//             Return_type right_ret_type;
+//             int right_val;
+
+//             std::tie(right_ret_type, right_val) = this->right->gen_code(code);
+            
+//             if (right_ret_type == int_num) {
+//                 std::string id = this->left->var_name + "[" + std::to_string(right_val) + "]";
+//                 return std::make_tuple(addr, code.sym_table->get_symbol(id));
+//             } 
+            
+//             code.load_addr(reg1, right_val);
+//             code.sll(reg1, reg1, 2);
+//             break;
+
+//         case _EXP_: {
+//             Return_type left_ret_type, right_ret_type;
+//             int left_val, right_val;
+
+//             if (this->left == nullptr) {
+//                 assert(this->right != nullptr);
+//                 std::tie(right_ret_type, right_val) = this->right->gen_code(code);
+
+//                 if (this->op == _MINUSOP_) {
+//                     if (right_ret_type == int_num)
+//                         return std::make_tuple(int_num, -right_val);
+
+//                     code.load_addr(reg1, right_val);
+//                     code.reg_reg_op(reg1, "$0", reg1, this->op);
+//                     std::string temp_symbol = code.sym_table->place_temp_symbol();
+
+//                     int new_addr = code.sym_table->get_symbol(temp_symbol);
+//                     code.save_reg(reg1, new_addr);
+
+//                     if (code.sym_table->is_temp_symbol(right_val))
+//                         code.sym_table->free_temp_symbol(right_val);
+
+//                     return std::make_tuple(addr, new_addr);
+
+//                 } else if (this->op == _NOT_OP_) {
+//                     if (right_ret_type == int_num) {
+//                         code.reg_int_op(reg1, reg1, right_val, this->op);
+//                         return std::make_tuple(int_num, !right_val);
+//                     }
+
+//                     code.load_addr(reg1, right_val);
+//                     code.reg_reg_op(reg1, reg1, reg1, this->op);
+//                     std::string temp_symbol = code.sym_table->place_temp_symbol();
+
+//                     int new_addr = code.sym_table->get_symbol(temp_symbol);
+//                     code.save_reg(reg1, new_addr);
+
+//                     if (code.sym_table->is_temp_symbol(right_val))
+//                         code.sym_table->free_temp_symbol(right_val);
+
+//                     return std::make_tuple(addr, new_addr);
+//                 }
+
+//                 return std::make_tuple(error, -1);
+
+//             } else if (this->right == nullptr) {
+//                 assert(this->left != nullptr);
+//                 return this->left->gen_code(code);
+
+//             }
+
+//             std::tie(right_ret_type, right_val) = this->right->gen_code(code);
+//             std::tie(left_ret_type, left_val) = this->left->gen_code(code);
+
+//             if (left_ret_type == error || right_ret_type == error) {
+//                 std::cout << "Code generation error: node return type error" << std::endl;
+//                 exit(1);
+//             }
+
+//             // Return_type new_type = static_cast<Return_type>(left_ret_type || right_ret_type);
+//             Return_type new_type = (left_ret_type == addr || right_ret_type == addr) ? addr : int_num;
+
+//             std::cout << new_type << std::endl;
+
+//             // generate code for EXP node
+//             if (left_ret_type == int_num && right_ret_type == int_num) {
+//                 int left_val = this->left->int_val;
+//                 int right_val = this->right->int_val;
+                
+//                 return std::make_tuple(new_type, this->handle_expression(left_val, right_val));
+
+//             } else if (left_ret_type == addr && right_ret_type == int_num) {
+//                 code.load_addr(reg1, left_val);
+//                 code.reg_int_op(reg2, reg1, right_val, this->op);
+//                 std::string temp_symbol = code.sym_table->place_temp_symbol();
+
+//                 int addr = code.sym_table->get_symbol(temp_symbol);
+//                 code.save_reg(reg2, addr);
+
+//                 if (code.sym_table->is_temp_symbol(left_val))
+//                     code.sym_table->free_temp_symbol(left_val);
+
+//                 return std::make_tuple(new_type, addr);
+
+//             } else if (left_ret_type == int_num && right_ret_type == addr) {    
+//                 code.load_addr(reg1, right_val);
+//                 code.reg_int_op(reg2, reg1, left_val, this->op);
+//                 std::string temp_symbol = code.sym_table->place_temp_symbol();
+
+//                 int addr = code.sym_table->get_symbol(temp_symbol);
+//                 code.save_reg(reg2, addr);
+
+//                 if (code.sym_table->is_temp_symbol(right_val))
+//                     code.sym_table->free_temp_symbol(right_val);
+
+//                 return std::make_tuple(new_type, addr);
+
+//             } else if (left_ret_type == addr && right_ret_type == addr) {
+//                 code.load_addr(reg1, left_val);
+//                 code.load_addr(reg2, right_val);
+//                 code.reg_reg_op(reg3, reg1, reg2, this->op);
+//                 std::string temp_symbol = code.sym_table->place_temp_symbol();
+
+//                 int addr = code.sym_table->get_symbol(temp_symbol);
+//                 code.save_reg(reg3, addr);
+//                 code.clear_reg(reg3);
+
+//                 if (code.sym_table->is_temp_symbol(left_val))
+//                     code.sym_table->free_temp_symbol(left_val);
+
+//                 if (code.sym_table->is_temp_symbol(right_val))
+//                     code.sym_table->free_temp_symbol(right_val);    
+
+//                 return std::make_tuple(new_type, addr);
+
+//             }
+
+//             return std::make_tuple(error, -1);
+//             break;
+//         }
+
+//         case _ROOT_: {
+//             // generate code for ROOT node
+//             assert(this->op == _ASSIGN_OP_ || this->op == _READ || this->op == _WRITE || this->op == _IF || this->op == _ELSE || this->op == _DO || this->op == _WHILE);
+
+//             Return_type left_ret_type, right_ret_type;
+//             int left_val, right_val;
+
+//             switch (this->op) {
+//                 case _ASSIGN_OP_: {
+//                     std::tie(right_ret_type, right_val) = this->right->gen_code(code);
+//                     std::tie(left_ret_type, left_val) = this->left->gen_code(code);
+
+//                     if (right_ret_type == addr) {
+//                         code.load_addr(reg1, right_val);
+
+//                         code.save_reg(reg1, code.sym_table->get_symbol(this->left->var_name));
+//                         return std::make_tuple(int_num, 0);
+
+//                     } else if (right_ret_type == int_num) {
+//                         code.load_int(reg1, right_val);
+
+//                         code.save_reg(reg1, code.sym_table->get_symbol(this->left->var_name));
+//                         return std::make_tuple(int_num, 0);
+//                     }
+
+//                     break;
+//                 }
+
+//                 case _READ: {
+//                     code.read_op();
+//                     code.load_addr(reg1, code.sym_table->get_symbol(this->right->var_name));
+//                     break;
+//                 }
+
+//                 case _WRITE:
+//                     code.write_op();
+
+//                     std::tie(right_ret_type, right_val) = this->right->gen_code(code);
+
+//                     if (right_ret_type == addr) {
+//                         code.load_addr("$4", right_val);
+//                         code.syscall();
+//                         return std::make_tuple(int_num, 0);
+
+//                     } else if (right_ret_type == int_num) {
+//                         code.load_int("$4", right_val);
+//                         code.syscall();
+//                         return std::make_tuple(int_num, 0);
+
+//                     }
+//                     break;
+
+//                 default:
+//                     return std::make_tuple(error, -1);
+//                     break;
+//             }
+
+//             return std::make_tuple(error, -1);
+//         }
+//     }
+// }
