@@ -1,8 +1,9 @@
 #include "MIPS.hpp"
 
-MIPS::MIPS(SymbTable *sym_table, symbol_table *declared_id) {
+MIPS::MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *labels) {
     this->sym_table = sym_table;
     this->declared_id = declared_id;
+    this->labels = labels;
 
     this->code.push_back("main:");
     this->code.push_back("\tmove $fp, $sp");
@@ -34,12 +35,40 @@ void MIPS::sltu(const std::string &dest_reg, const std::string &source_reg_1, co
     this->code.push_back("\tsltu " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
 }
 
+void MIPS::slt(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2) {
+    this->code.push_back("\tslt " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
+}
+
 void MIPS::sltiu(const std::string &dest_reg, const std::string &source_reg, int num) {
     this->code.push_back("\tsltiu " + dest_reg + ", " + source_reg + ", " + std::to_string(num));
 }
 
+void MIPS::slti(const std::string &dest_reg, const std::string &source_reg, int num) {
+    this->code.push_back("\tslti " + dest_reg + ", " + source_reg + ", " + std::to_string(num));
+}
+
+void MIPS::and_op(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2) {
+    this->code.push_back("\tand " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
+}
+
 void MIPS::andi(const std::string &dest_reg, const std::string &source_reg, int num) {
     this->code.push_back("\tandi " + dest_reg + ", " + source_reg + ", " + std::to_string(num));
+}
+
+void MIPS::xor_op(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2) {
+    this->code.push_back("\txor " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
+}
+
+void MIPS::xori(const std::string &dest_reg, const std::string &source_reg, int num) {
+    this->code.push_back("\txori " + dest_reg + ", " + source_reg + ", " + std::to_string(num));
+}
+
+void MIPS::or_op(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2) {
+    this->code.push_back("\tor " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
+}
+
+void MIPS::ori(const std::string &dest_reg, const std::string &source_reg, int num) {
+    this->code.push_back("\tori " + dest_reg + ", " + source_reg + ", " + std::to_string(num));
 }
 
 void MIPS::addiu(const std::string &dest_reg, const std::string &source_reg, int num) {
@@ -71,16 +100,20 @@ void MIPS::div(const std::string &dest_reg, const std::string &source_reg_1, con
     this->code.push_back("\tmflo " + dest_reg);
 }
 
-void MIPS::syscall() {
+void MIPS::add_return(void) {
+    this->code.push_back("\tjr $31");
+}
+
+void MIPS::syscall(void) {
     this->code.push_back("\tsyscall");
 }
 
-void MIPS::read_op() {
+void MIPS::read_op(void) {
     this->code.push_back("\tli $2, 5");
     this->syscall();
 }
 
-void MIPS::write_op() {
+void MIPS::write_op(void) {
     this->code.push_back("\tli $2, 1");
 }
 
@@ -90,30 +123,79 @@ void MIPS::reg_int_op(const std::string &dest_reg, const std::string &source_reg
             if (num != 0)
                 this->load_int(dest_reg, 1);
             else {
-                this->load_sym(dest_reg, source_reg);
-                this->sltu(dest_reg, "$0", dest_reg);
+                this->sltu(dest_reg, "$0", source_reg);
                 this->andi(dest_reg, dest_reg, 255);    
             }
             break;
         }
-        case _ANDAND_:
+        case _ANDAND_: {
+            if (num == 0)
+                this->load_int(dest_reg, 0);
+            else {
+                this->sltu(dest_reg, "$0", source_reg);
+                this->andi(dest_reg, dest_reg, 255);    
+            }
             break;
-        case _OR_OP_:
+        }
+        case _OR_OP_: {
+            if (num < 0) {
+                this->load_int(dest_reg, num);
+                this->or_op(dest_reg, source_reg, dest_reg);
+            } else 
+                this->ori(dest_reg, source_reg, num);
             break;
-        case _AND_OP_:
+        }
+        case _AND_OP_: {
+            if (num < 0) {
+                this->load_int(dest_reg, num);
+                this->and_op(dest_reg, source_reg, dest_reg);
+            } else 
+                this->andi(dest_reg, source_reg, num);
             break;
-        case _EQ_:
+        }
+        case _EQ_: {
+            if (num > 0)
+                this->xori(dest_reg, source_reg, num);
+            else 
+                this->addiu(dest_reg, source_reg, -num);
+
+            this->sltiu(dest_reg, dest_reg, 1);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _NOTEQ_:
+        }
+        case _NOTEQ_: {
+            if (num > 0)
+                this->xori(dest_reg, source_reg, num);
+            else 
+                this->addiu(dest_reg, source_reg, -num);
+
+            this->sltu(dest_reg, "$0", dest_reg);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _LT_:
+        }
+        case _LT_: {
+            this->slti(dest_reg, source_reg, num);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _GT_:
+        }
+        case _GT_: {
+            this->slti(dest_reg, source_reg, num + 1);
+            this->xori(dest_reg, dest_reg, 1);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _LTEQ_:
+        }
             break;
-        case _GTEQ_:
+        case _LTEQ_: {
+            this->slti(dest_reg, source_reg, num + 1);
+            this->andi(dest_reg, dest_reg, 255);
             break;
+        }
+        case _GTEQ_: {
+            this->slti(dest_reg, source_reg, num);
+            this->xori(dest_reg, dest_reg, 1);
+            this->andi(dest_reg, dest_reg, 255);
+            break;
+        }
         case _SHL_OP_:
             this->sll(dest_reg, source_reg, std::to_string(num));
             break;
@@ -151,26 +233,61 @@ void MIPS::reg_int_op(const std::string &dest_reg, const std::string &source_reg
 void MIPS::reg_reg_op(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2, op_type op) {
     switch (op) {
         case _OROR_: {
+            this->xor_op(dest_reg, source_reg_1, source_reg_2);
+            this->sltu(dest_reg, "$0", dest_reg);
             break;
         }
-        case _ANDAND_:
+        case _ANDAND_: {
+            // Do negation on A and B
+            this->sltiu(source_reg_1, source_reg_1, 1);
+            this->sltiu(source_reg_2, source_reg_2, 1);
+            // Perform bitwise or
+            this->or_op(dest_reg, source_reg_1, source_reg_2);
+            // Set less than 0 !(!A || !B) = (A && B);
+            this->sltu(dest_reg, "$0", dest_reg);
+            this->sltiu(dest_reg, dest_reg, 1);
             break;
+        }
         case _OR_OP_:
+            this->or_op(dest_reg, source_reg_1, source_reg_2);
             break;
         case _AND_OP_:
+            this->and_op(dest_reg, source_reg_1, source_reg_2);
             break;
-        case _EQ_:
+        case _EQ_: {
+            this->xor_op(dest_reg, source_reg_1, source_reg_2);
+            this->sltiu(dest_reg, dest_reg, 1);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _NOTEQ_:
+        }
+        case _NOTEQ_: {
+            this->xor_op(dest_reg, source_reg_1, source_reg_2);
+            this->sltu(dest_reg, "$0", dest_reg);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _LT_:
+        }
+        case _LT_: {
+            this->slt(dest_reg, source_reg_1, source_reg_2);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _GT_:
+        }
+        case _GT_: {
+            this->slt(dest_reg, source_reg_2, source_reg_1);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _LTEQ_:
+        }
+        case _LTEQ_: {
+            this->slt(dest_reg, source_reg_2, source_reg_1);
+            this->xori(dest_reg, dest_reg, 1);
+            this->andi(dest_reg, dest_reg, 255);
             break;
-        case _GTEQ_:
+        }
+        case _GTEQ_: {
+            this->slt(dest_reg, source_reg_1, source_reg_2);
+            this->xori(dest_reg, dest_reg, 1);
+            this->andi(dest_reg, dest_reg, 255);
             break;
+        }
         case _SHL_OP_:
             this->sll(dest_reg, source_reg_1, source_reg_2);
             break;
@@ -195,7 +312,7 @@ void MIPS::reg_reg_op(const std::string &dest_reg, const std::string &source_reg
             break;
         default:
             break;
-    }    
+    }
 }
 
 void MIPS::clear_reg(const std::string &reg) {

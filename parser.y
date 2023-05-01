@@ -18,8 +18,9 @@
 %code {
 
     SymbTable sym_table = SymbTable();
-    symbol_table declared_id;
-    MIPS mips = MIPS(&sym_table, &declared_id);
+    Map declared_id;
+    LabelStack labels;
+    MIPS mips = MIPS(&sym_table, &declared_id, &labels);
 
     int curr_scope = 0;
 }

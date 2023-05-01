@@ -1,11 +1,7 @@
-int a = 3;
-int b = 4;
-int c = 2;
-int d[5];
-int e;
+int a = 0, c;
+int b;
 
-d[2] = 2;
-d[4] = 7;
-e = d[(a + 1) / 2];
+c = 9;
+b = (a || 9);
 
-printf(e);
+printf(b);

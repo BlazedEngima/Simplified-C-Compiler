@@ -163,6 +163,29 @@ int Node::gen_code(MIPS &code) {
                 }
 
                 case _IF: {
+                    assert(this->left == nullptr);
+                    int right_addr = this->right->gen_code(code);
+
+                    if (code.sym_table->is_temp_symbol(right_addr))
+                        code.sym_table->free_temp_symbol(right_addr);
+
+                    switch (this->right->op) {
+                        case _GT_:
+                            /* code */
+                            break;
+                        case _GTEQ_:
+                            break;
+                        case _LT_:
+                            break;
+                        case _LTEQ_:
+                            break;
+                        case _EQ_:
+                            break;
+                        case _NOTEQ_:
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 }
 
@@ -178,6 +201,10 @@ int Node::gen_code(MIPS &code) {
                     break;
                 }
                 
+                case _RETURN_:
+                    code.add_return();
+                    break;
+
                 default:
                     return -2;
                     break;

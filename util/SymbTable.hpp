@@ -9,11 +9,11 @@
 #include <assert.h>
 
 
-typedef std::unordered_map<std::string, int> symbol_table;
+typedef std::unordered_map<std::string, int> Map;
 
 class SymbTable {
     private:
-        symbol_table sym_table;
+        Map sym_table;
         // Data type is int because we use the idx as the temp var name
         std::unordered_set<int> temp_symbols;
         std::unordered_set<int> free_temp_symbols;
