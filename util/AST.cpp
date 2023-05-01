@@ -214,6 +214,11 @@ int Node::gen_code(MIPS &code) {
             if (code.sym_table->is_temp_symbol(right_addr))
                 code.sym_table->free_temp_symbol(right_addr);
 
+            if (this->right->int_val < 0) {
+                std::cout << "Error, array index cannot evaluate to a negative number" << std::endl;
+                exit(1);
+            }
+
             std::string id = this->left->var_name + "[" + std::to_string(this->right->int_val) + "]";
             return code.sym_table->get_symbol(id);
             break;
@@ -263,7 +268,6 @@ int Node::gen_code(MIPS &code) {
                 code.sym_table->free_temp_symbol(right_addr);
 
             this->int_val = this->handle_expression(this->left->int_val, this->right->int_val);
-            std::cout << this->int_val << std::endl;
 
             if (left_addr == -1 && right_addr == -1)
                 return -1;
