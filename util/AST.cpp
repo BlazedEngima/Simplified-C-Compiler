@@ -161,6 +161,22 @@ int Node::gen_code(MIPS &code) {
                     break;
                 }
 
+                case _IF: {
+                    break;
+                }
+
+                case _ELSE: {
+                    break;
+                }
+
+                case _DO: {
+                    break;
+                }
+
+                case _WHILE: {
+                    break;
+                }
+                
                 default:
                     return -2;
                     break;
@@ -271,7 +287,13 @@ int Node::gen_code(MIPS &code) {
                 return new_addr;
             }
         }
+
+        default:
+            return -2;
+            break;
     }
+
+    return -2;
 }
 
 // Return_val Node::gen_code(MIPS &code) {
