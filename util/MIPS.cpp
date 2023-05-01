@@ -62,6 +62,15 @@ void MIPS::sra(const std::string &dest_reg, const std::string &source_reg, const
     this->code.push_back("\tsra " + dest_reg + ", " + source_reg + ", " + num_or_reg);
 }
 
+void MIPS::mul(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2) {
+    this->code.push_back("\tmul " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
+}
+
+void MIPS::div(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2) {
+    this->code.push_back("\tdiv " + source_reg_1 + ", " + source_reg_2);
+    this->code.push_back("\tmflo " + dest_reg);
+}
+
 void MIPS::syscall() {
     this->code.push_back("\tsyscall");
 }
@@ -85,7 +94,6 @@ void MIPS::reg_int_op(const std::string &dest_reg, const std::string &source_reg
                 this->sltu(dest_reg, "$0", dest_reg);
                 this->andi(dest_reg, dest_reg, 255);    
             }
-
             break;
         }
         case _ANDAND_:
@@ -115,18 +123,25 @@ void MIPS::reg_int_op(const std::string &dest_reg, const std::string &source_reg
         case _PLUSOP_: 
             this->addiu(dest_reg, source_reg, num);
             break;
-        
         case _MINUSOP_:
             this->addiu(dest_reg, source_reg, -num);
             break;
-
-        case _MUL_OP_:
+        case _MUL_OP_: {
+            this->load_int("$9", num);
+            this->mul(dest_reg, source_reg, "$9");
             break;
-        case _DIV_OP_:
-            break;
-        case _NOT_OP_: {
-            (num) ? this->load_int(dest_reg, 1) : this->load_int(dest_reg, 0);
         }
+        case _DIV_OP_: {
+            if (!num){
+                std::cout << "Error, division by zero" << std::endl;
+                exit(1);
+            }
+            this->load_int("$9", num);
+            this->div(dest_reg, source_reg, "$9");
+            break;
+        }
+        case _NOT_OP_: 
+            (num) ? this->load_int(dest_reg, 1) : this->load_int(dest_reg, 0);
             break;
         default:
             break;
@@ -169,8 +184,10 @@ void MIPS::reg_reg_op(const std::string &dest_reg, const std::string &source_reg
             this->subu(dest_reg, source_reg_1, source_reg_2);
             break;
         case _MUL_OP_:
+            this->mul(dest_reg, source_reg_1, source_reg_2);
             break;
         case _DIV_OP_:
+            this->div(dest_reg, source_reg_1, source_reg_2);
             break;
         case _NOT_OP_:
             this->sltiu(dest_reg, source_reg_1, 1);

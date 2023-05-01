@@ -57,9 +57,14 @@ int Node::handle_expression(int left_val, int right_val) {
         case _MUL_OP_:
             return left_val * right_val;
             break;
-        case _DIV_OP_:
+        case _DIV_OP_: {
+            if (!right_val) {
+                std::cout << "Division by zero occured" << std::endl;
+                return left_val;
+            }
             return left_val / right_val;
             break;
+        }
         default:
             std::cout << "Operator not used properly" << std::endl;
             exit(1);
@@ -112,11 +117,8 @@ int Node::gen_code(MIPS &code) {
     switch (this->type) {
         case _ROOT_: {
             assert(this->op == _ASSIGN_OP_ || this->op == _READ || this->op == _WRITE || this->op == _IF || this->op == _ELSE || this->op == _DO || this->op == _WHILE);
-            
             switch (this->op) {
                 case _ASSIGN_OP_: {
-                    // this->left->int_val = this->right->int_val;
-                    // std::cout << this->left->int_val << std::endl;
                     int left_addr = this->left->gen_code(code);
                     int right_addr = this->right->gen_code(code);
 
@@ -144,7 +146,6 @@ int Node::gen_code(MIPS &code) {
                 }
 
                 case _WRITE: {
-
                     int right_addr = this->right->gen_code(code);
 
                     if (code.sym_table->is_temp_symbol(right_addr))
@@ -244,7 +245,6 @@ int Node::gen_code(MIPS &code) {
                     return -1;
                 }
             } // Add if right child is ever null
-
             left_addr = this->left->gen_code(code);
             right_addr = this->right->gen_code(code);
 
@@ -253,11 +253,7 @@ int Node::gen_code(MIPS &code) {
             if (code.sym_table->is_temp_symbol(right_addr))
                 code.sym_table->free_temp_symbol(right_addr);
 
-            this->int_val = this->handle_expression(this->left->int_val, this->right->int_val);
-
-            std::cout << this->left->int_val << std::endl;
-            std::cout << this->right->int_val << std::endl;
-            std::cout << this->int_val << std::endl;
+            // this->int_val = this->handle_expression(this->left->int_val, this->right->int_val);
 
             if (left_addr == -1 && right_addr == -1)
                 return -1;

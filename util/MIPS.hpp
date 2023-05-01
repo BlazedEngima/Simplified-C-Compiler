@@ -3,10 +3,8 @@
 #pragma once
 
 #include "SymbTable.hpp"
-// #include "AST.hpp"
 #include <vector>
 
-// class SymbTable;
 class Node;
 
 enum node_type {_ID_, _EXP_, _INT_NUM_, _ARRAY_, _ASSIGN_, _ROOT_};
@@ -40,6 +38,8 @@ class MIPS {
         void subu(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
         void sll(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg);
         void sra(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg);
+        void mul(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
+        void div(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
         void syscall();
         void read_op();
         void write_op();
