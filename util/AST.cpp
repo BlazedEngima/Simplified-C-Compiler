@@ -116,7 +116,7 @@ int Node::gen_code(MIPS &code) {
 
     switch (this->type) {
         case _ROOT_: {
-            assert(this->op == _ASSIGN_OP_ || this->op == _READ || this->op == _WRITE || this->op == _IF || this->op == _ELSE || this->op == _DO || this->op == _WHILE);
+            assert(this->op == _ASSIGN_OP_ || this->op == _READ || this->op == _WRITE || this->op == _IF || this->op == _ELSE || this->op == _DO || this->op == _WHILE || this->op == _RETURN_);
             switch (this->op) {
                 case _ASSIGN_OP_: {
                     int left_addr = this->left->gen_code(code);
@@ -163,30 +163,31 @@ int Node::gen_code(MIPS &code) {
                 }
 
                 case _IF: {
-                    assert(this->left == nullptr);
-                    int right_addr = this->right->gen_code(code);
+                    assert(this->right == nullptr);
+                    code.nop();
+                    // int right_addr = this->left->gen_code(code);
 
-                    if (code.sym_table->is_temp_symbol(right_addr))
-                        code.sym_table->free_temp_symbol(right_addr);
+                    // if (code.sym_table->is_temp_symbol(right_addr))
+                    //     code.sym_table->free_temp_symbol(right_addr);
 
-                    switch (this->right->op) {
-                        case _GT_:
-                            /* code */
-                            break;
-                        case _GTEQ_:
-                            break;
-                        case _LT_:
-                            break;
-                        case _LTEQ_:
-                            break;
-                        case _EQ_:
-                            break;
-                        case _NOTEQ_:
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
+                    // switch (this->right->op) {
+                    //     case _GT_:
+                    //         /* code */
+                    //         break;
+                    //     case _GTEQ_:
+                    //         break;
+                    //     case _LT_:
+                    //         break;
+                    //     case _LTEQ_:
+                    //         break;
+                    //     case _EQ_:
+                    //         break;
+                    //     case _NOTEQ_:
+                    //         break;
+                    //     default:
+                    //         break;
+                    // }
+                    // break;
                 }
 
                 case _ELSE: {

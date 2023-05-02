@@ -16,6 +16,8 @@ class Node {
     public:
         Node *left = nullptr;
         Node *right = nullptr;
+        std::vector<Node*> *code_block = nullptr;
+        
         int int_val;
         std::string var_name;
         op_type op;

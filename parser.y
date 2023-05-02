@@ -41,9 +41,11 @@
 %token <value> INT_NUM
 %token <name> ID
 
-%type <node_vector> declaration_list
+%type <node_vector> declaration_list var_declarations var_declaration statements
+%type<node_vector> code_block 
 %type <node> declaration assign_statement write_statement read_statement read_write_statement
-%type <node> if_statement if_stmt
+%type <node> if_statement if_stmt return_statement control_statement do_while_statement while_statement
+%type <node> statement
 %type <node> exp exp1 exp2 exp3 exp4 exp5 exp6 exp7 exp8 exp9 exp10 exp11
 
 
@@ -51,18 +53,35 @@
 %start prog
 
 %%
-prog                : var_declarations statements;
+prog                : var_declarations statements
+                    {
+                        for (auto it = $1->begin(); it != $1->end(); it++) {
+                            (*it)->gen_declare_code(mips);
+                        }
+                        delete $1;
 
-var_declarations    : var_declaration var_declarations;
-                    | %empty ; 
+                        for (auto it = $2->begin(); it != $2->end(); it++) {
+                            (*it)->gen_code(mips);
+                        }
+                        delete $2;
+                    };
+
+var_declarations    : var_declaration var_declarations
+                    {
+                        for (auto it = $1->begin(); it != $1->end(); it++) {
+                            $2->push_back(*(it));
+                        }
+                        $$ = $2;
+                        delete $1;
+                    };
+                    | %empty
+                    {
+                        $$ = new std::vector<Node*>;
+                    }; 
 
 var_declaration     : INT declaration_list SEMI 
                     {
-                        for (auto it = $2->begin(); it != $2->end(); it++) {
-                            (*it)->gen_declare_code(mips);
-                        }
-
-                        delete $2;
+                        $$ = $2;
                     };
 
 declaration_list    : declaration_list COMMA declaration 
@@ -97,28 +116,58 @@ declaration         : ID ASSIGNOP INT_NUM
                         $$ = new Node(_ID_, *($1));
                     };
 
-code_block          : statement;
-                    | LBRACE statements RBRACE;
+code_block          : statement
+                    {
+                        $$ = new std::vector<Node*>;
+                        $$->push_back($1);
+                    };
+                    | LBRACE statements RBRACE
+                    {
+                        $$ = $2;
+                    };
 
-statements          : statements statement;
-                    | statement;
+statements          : statements statement
+                    {
+                        $1->push_back($2);
+                        $$ = $1;
+                    };
+                    | statement
+                    {
+                        $$ = new std::vector<Node*>;
+                        $$->push_back($1);
+                    };
 
 statement           : assign_statement SEMI
                     {
-                        $1->gen_code(mips);
+                        $$ = $1;
                     };
-                    | control_statement;
+                    | control_statement
+                    {
+                        $$ = $1;
+                    };
                     | read_write_statement SEMI
                     {
-                        $1->gen_code(mips);
+                        $$ = $1;
                     };
-                    | BREAK SEMI;
-                    | SEMI;
+                    | BREAK SEMI {};
+                    | SEMI {};
 
-control_statement   : if_statement;
-                    | while_statement;
-                    | do_while_statement SEMI;
-                    | return_statement SEMI;
+control_statement   : if_statement
+                    {
+                        $$ = $1;
+                    };
+                    | while_statement
+                    {
+                        $$ = $1;
+                    };
+                    | do_while_statement SEMI
+                    {
+                        $$ = $1;
+                    };
+                    | return_statement SEMI
+                    {
+                        $$ = $1;
+                    };
 
 read_write_statement: read_statement
                     {
@@ -152,19 +201,43 @@ assign_statement    : ID LSQUARE exp RSQUARE ASSIGNOP exp
                         $$->right = $3;
                     };
 
-if_statement        : if_stmt %prec THEN;
-                    | if_stmt ELSE code_block;
+if_statement        : if_stmt %prec THEN
+                    {
+                        $1->type = _ROOT_;
+                        $$ = $1;
+                    };
+                    | if_stmt ELSE code_block
+                    {
+                        $$ = new Node(_ROOT_, _ELSE);
+                        $$->left = $1;
+                        $$->code_block = $3;
+                    };
 
 if_stmt             : IF LPAREN exp RPAREN code_block
                     {
-
+                        $$ = new Node(_EXP_, _IF);
+                        $$->left = $3;
+                        $$->code_block = $5;
                     };
 
-while_statement     : WHILE LPAREN exp RPAREN code_block;
+while_statement     : WHILE LPAREN exp RPAREN code_block
+                    {
+                        $$ = new Node(_ROOT_, _WHILE);
+                        $$->code_block = $5;
+                        $$->left = $3;
+                    };
 
-do_while_statement  : DO code_block WHILE LPAREN exp RPAREN;
+do_while_statement  : DO code_block WHILE LPAREN exp RPAREN
+                    {
+                        $$ = new Node(_ROOT_, _DO);
+                        $$->left = $5;
+                        $$->code_block = $2;
+                    };
 
-return_statement    : RETURN;
+return_statement    : RETURN 
+                    {
+                        $$ = new Node(_ROOT_, _RETURN_);
+                    };
 
 read_statement      : READ_ LPAREN ID RPAREN
                     {

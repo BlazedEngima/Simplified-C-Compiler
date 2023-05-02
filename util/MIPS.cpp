@@ -102,7 +102,7 @@ void MIPS::div(const std::string &dest_reg, const std::string &source_reg_1, con
 }
 
 void MIPS::add_return(void) {
-    this->code.push_back("\tjr $31");
+    // this->code.push_back("\tjr $31");
 }
 
 void MIPS::syscall(void) {
