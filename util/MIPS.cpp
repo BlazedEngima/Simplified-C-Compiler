@@ -332,6 +332,11 @@ void MIPS::branch(const std::string &source_reg, const std::string &branch_name)
     this->code.push_back("\tbne " + source_reg + ", $0, " + branch_name);
 }
 
+void MIPS::branch_if(const std::string &source_reg, const std::string &branch_name) {
+    this->code.push_back("\tbeq " + source_reg + ", $0, " + branch_name);
+
+}
+
 void MIPS::clear_reg(const std::string &reg) {
     this->code.push_back("\tli " + reg + ", 0");
 }

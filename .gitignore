@@ -1,4 +1,5 @@
 # Prerequisites
+*.cfg
 *.d
 
 # Compiled Object files

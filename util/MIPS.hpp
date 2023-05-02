@@ -59,6 +59,7 @@ class MIPS {
         void read_op(void);
         void write_op(void);
         void branch(const std::string &source_reg, const std::string &branch_name);
+        void branch_if(const std::string &source_reg, const std::string &branch_name);
         void add_exit(void);
 
         void print_id_list();

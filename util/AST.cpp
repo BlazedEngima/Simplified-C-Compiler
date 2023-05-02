@@ -188,18 +188,18 @@ int Node::gen_code(MIPS &code) {
                         code.entry_labels->push(branch_name);
                         code.exit_labels->push(branch_exit_name);
                     } else {
-                        branch_exit_name = code.exit_labels->top();
+                        branch_exit_name = code.entry_labels->top();
                         code.exit_labels->pop();
                     }
 
-                    code.branch(reg1, branch_name);
+                    code.branch_if(reg1, branch_name);
                     for (auto it = this->code_block->begin(); it != this->code_block->end(); it++) {
                         (*it)->gen_code(code);
                     }
                     // std::string branch_name = "if_branch_1";
-                    code.jump(branch_exit_name);
+                    // code.jump(branch_exit_name);
                     code.add_branch_label(branch_name);
-                        // int branch_num = code.sym_table->get_branch_counter();
+                    // int branch_num = code.sym_table->get_branch_counter();
                     // std::string branch_name = "if_branch_" + std::to_string(branch_num);
                     // std::string branch_exit_name = "if_exit_branch_" + std::to_string(branch_num);
                     // code.sym_table->add_branch_counter();
@@ -211,7 +211,7 @@ int Node::gen_code(MIPS &code) {
                     //     (*it)->gen_code(code);
                     // }
                     // code.add_branch_label(branch_name);
-                    // return 0;
+                    return 0;
                     break;
                 }
 
@@ -270,6 +270,31 @@ int Node::gen_code(MIPS &code) {
                 }
 
                 case _WHILE: {
+                    assert(this->right == nullptr && this->code_block != nullptr);
+                    int branch_num = code.sym_table->get_branch_counter();
+                    std::string branch_name = "while_branch_" + std::to_string(branch_num);
+                    std::string exit_branch_name = "exit_while_branch_" + std::to_string(branch_num);
+                    code.sym_table->add_branch_counter();
+                    code.entry_labels->push(branch_name);
+                    code.exit_labels->push(exit_branch_name);
+
+                    code.jump(exit_branch_name);
+
+                    code.add_branch_label(branch_name);
+                    for (auto it = this->code_block->begin(); it != this->code_block->end(); it++) {
+                        (*it)->gen_code(code);
+                    }
+                    code.add_branch_label(exit_branch_name);
+
+                    int left_addr = this->left->gen_code(code);
+                    if (code.sym_table->is_temp_symbol(left_addr))
+                        code.sym_table->free_temp_symbol(left_addr);
+
+                    assert(left_addr != 1);
+                    code.load_addr(reg1, left_addr);
+
+                    code.branch(reg1, branch_name);
+                    return 0;
                     break;
                 }
                 

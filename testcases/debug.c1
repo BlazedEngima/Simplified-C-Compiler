@@ -1,7 +1,11 @@
-int a = 0, c;
-int b;
+int a;
 
-c = 9;
-b = (a || 9);
+a = 4;
+if (a > 3) {
+    a = a + 1;
+} else {
+    a = a - 1;
+}
 
-printf(b);
+printf(a);
+return;
