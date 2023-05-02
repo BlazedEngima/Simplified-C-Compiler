@@ -22,8 +22,6 @@
     LabelStack entry_labels;
     LabelStack exit_labels;
     MIPS mips = MIPS(&sym_table, &declared_id, &entry_labels, &exit_labels);
-
-    int curr_scope = 0;
 }
 
 %union{
@@ -41,8 +39,7 @@
 %token <value> INT_NUM
 %token <name> ID
 
-%type <node_vector> declaration_list var_declarations var_declaration statements
-%type<node_vector> code_block 
+%type <node_vector> declaration_list var_declarations var_declaration statements code_block
 %type <node> declaration assign_statement write_statement read_statement read_write_statement
 %type <node> if_statement if_stmt return_statement control_statement do_while_statement while_statement
 %type <node> statement
@@ -217,8 +214,8 @@ if_stmt             : IF LPAREN exp RPAREN code_block
                     {
                         $$ = new Node(_EXP_, _IF);
                         $$->left = $3;
-                        $$->code_block = $5;
-                    };
+                            $$->code_block = $5;
+                        };
 
 while_statement     : WHILE LPAREN exp RPAREN code_block
                     {
@@ -450,7 +447,7 @@ int main(int argc, char *argv[]) {
         yyin = fopen(argv[1], "r");
 
         yyparse();
-
+        mips.add_exit();
         fclose(yyin);
 
         /* mips.print_id_list(); */

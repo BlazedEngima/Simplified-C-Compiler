@@ -183,14 +183,14 @@ int Node::gen_code(MIPS &code) {
                     branch_name = "if_branch_" + std::to_string(branch_num);
                     code.sym_table->add_branch_counter();
 
-                    if (code.exit_labels->empty()) {
-                        branch_exit_name = "if_exit_branch_" + std::to_string(branch_num);
-                        code.entry_labels->push(branch_name);
-                        code.exit_labels->push(branch_exit_name);
-                    } else {
-                        branch_exit_name = code.entry_labels->top();
-                        code.exit_labels->pop();
-                    }
+                    // if (code.exit_labels->empty()) {
+                    //     branch_exit_name = "if_exit_branch_" + std::to_string(branch_num);
+                    //     code.entry_labels->push(branch_name);
+                    //     code.exit_labels->push(branch_exit_name);
+                    // } else {
+                    //     branch_exit_name = code.entry_labels->top();
+                    //     code.exit_labels->pop();
+                    // }
 
                     code.branch_if(reg1, branch_name);
                     for (auto it = this->code_block->begin(); it != this->code_block->end(); it++) {
@@ -237,9 +237,10 @@ int Node::gen_code(MIPS &code) {
                     for (auto it = this->code_block->begin(); it != this->code_block->end(); it++) {
                         (*it)->gen_code(code);
                     }
-
-                    code.jump(branch_exit_name);
                     code.add_branch_label(branch_exit_name);
+                    return 0;
+                    // code.jump(branch_exit_name);
+                    // code.add_branch_label(branch_exit_name);
                     break;
                 }
 
@@ -392,25 +393,26 @@ int Node::gen_code(MIPS &code) {
                     code.sym_table->free_temp_symbol(left_addr);
                 
                 assert(left_addr != 1);
-                if (left_addr != -1)
-                    code.load_addr(reg1, left_addr);
+                code.load_addr(reg1, left_addr);
                 // else if (left_addr == -1)
                 //     code.load_int(reg1, this->left->int_val);
                 std::string branch_name, branch_exit_name;
                 int branch_num = code.sym_table->get_branch_counter();
                 branch_name = "if_branch_" + std::to_string(branch_num);
+                branch_exit_name = "if_exit_branch_" + std::to_string(branch_num);
                 code.sym_table->add_branch_counter();
-
-                if (code.exit_labels->empty()) {
-                    branch_exit_name = "if_exit_branch_" + std::to_string(branch_num);
-                    code.entry_labels->push(branch_name);
-                    code.exit_labels->push(branch_exit_name);
-                } else {
-                    branch_exit_name = code.exit_labels->top();
-                    code.exit_labels->pop();
-                }
+                
+                // if (code.exit_labels->empty()) {
+                //     branch_exit_name = "if_exit_branch_" + std::to_string(branch_num);
+                //     code.entry_labels->push(branch_name);
+                //     code.exit_labels->push(branch_exit_name);
+                // } else {
+                //     branch_exit_name = code.exit_labels->top();
+                //     code.exit_labels->pop();
+                // }
                 // std::string branch_name = "if_branch_1";
-                code.branch(reg1, branch_name);
+                code.exit_labels->push(branch_exit_name);
+                code.branch_if(reg1, branch_name);
                 for (auto it = this->code_block->begin(); it != this->code_block->end(); it++) {
                     (*it)->gen_code(code);
                 }
