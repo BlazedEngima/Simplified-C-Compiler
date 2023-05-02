@@ -101,8 +101,20 @@ void MIPS::div(const std::string &dest_reg, const std::string &source_reg_1, con
     this->code.push_back("\tmflo " + dest_reg);
 }
 
+void MIPS::jump(const std::string &label) {
+    this->code.push_back("\tj " + label);
+}
+
 void MIPS::add_return(void) {
-    // this->code.push_back("\tjr $31");
+    this->code.push_back("\tj exit");
+}
+
+void MIPS::add_exit(void) {
+    this->code.push_back("exit:");
+}
+
+void MIPS::add_branch_label(const std::string &branch_name) {
+    this->code.push_back(branch_name + ":");
 }
 
 void MIPS::syscall(void) {
@@ -316,6 +328,10 @@ void MIPS::reg_reg_op(const std::string &dest_reg, const std::string &source_reg
     }
 }
 
+void MIPS::branch(const std::string &source_reg, const std::string &branch_name) {
+    this->code.push_back("\tbne " + source_reg + ", $0, " + branch_name);
+}
+
 void MIPS::clear_reg(const std::string &reg) {
     this->code.push_back("\tli " + reg + ", 0");
 }
@@ -325,6 +341,7 @@ void MIPS::print_id_list() {
         std::cout << "{" << pair.first << "\t: " << pair.second << "}" << std::endl;
     }
 }
+
 void MIPS::print() {
     for (auto const &elem : this->code) {
         std::cout << elem << std::endl;

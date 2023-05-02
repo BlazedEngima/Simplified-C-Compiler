@@ -51,12 +51,15 @@ class MIPS {
         void sra(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg);
         void mul(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
         void div(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
+        void jump(const std::string &label);
         
-
+        void add_branch_label(const std::string &branch_name);
         void add_return(void);
         void syscall(void);
         void read_op(void);
         void write_op(void);
+        void branch(const std::string &source_reg, const std::string &branch_name);
+        void add_exit(void);
 
         void print_id_list();
         void print();

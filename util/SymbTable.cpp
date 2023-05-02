@@ -38,6 +38,19 @@ int SymbTable::place_symbol(const std::string &id) {
     return this->idx;
 }
 
+int SymbTable::get_branch_counter(void) {
+    auto it = this->sym_table.find("Branch_counter");
+    return it->second;
+}
+
+void SymbTable::add_branch_counter(void) {
+    int branch_counter = this->get_branch_counter();
+    branch_counter++;
+
+    auto it = this->sym_table.find("Branch_counter");
+    it->second = branch_counter;
+}
+
 void SymbTable::free_temp_symbol(int id) {
     this->free_temp_symbols.insert(id);
 }

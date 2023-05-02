@@ -23,6 +23,8 @@ class SymbTable {
         SymbTable();
         const int get_symbol(const std::string &id);
         int place_symbol(const std::string &id);
+        int get_branch_counter(void);
+        void add_branch_counter(void);
         void free_temp_symbol(int id);
         std::string place_temp_symbol();
 
