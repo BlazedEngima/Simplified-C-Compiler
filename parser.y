@@ -443,7 +443,7 @@ int main(int argc, char *argv[]) {
         int index = file_path.find_last_of("/\\");
         std::string input_file = file_path.substr(index + 1);
 
-        std::string output_file = "./testcases/results/" + input_file + "_output.txt";
+        std::string output_file = "./testcases/results/" + input_file + "_output.asm";
         yyin = fopen(argv[1], "r");
         std::ofstream output(output_file);
         yyparse();
