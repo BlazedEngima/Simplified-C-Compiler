@@ -37,8 +37,8 @@ class Node {
 
         int handle_expression(int left_val, int right_val);
         int gen_declare_code(MIPS &code);
-        int evaluate_expression(MIPS &code);
-        // Return_val gen_code(MIPS &code);
+        int evaluate_root(MIPS &code);
+        int evaluate_flip_op(MIPS &code); // For !(exp) and -(exp)
         int gen_code(MIPS &code);
 };
 

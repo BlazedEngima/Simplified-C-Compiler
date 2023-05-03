@@ -1,6 +1,6 @@
 Test Whether an integer is prime or not
 If it is prime, print 1
-Other wise, pring 0
+Other wise, print 0
 
 Input: 2
 Output: 1

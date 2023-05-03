@@ -3,6 +3,7 @@
     #include <string>
     #include <vector>
     #include <assert.h>
+    #include <fstream>
     #include "util/AST.hpp"
     #include "util/SymbTable.hpp"
     #include "util/MIPS.hpp"
@@ -11,17 +12,14 @@
 %code top {
     extern "C" int yylex(void);
     extern "C" int yyparse(void);
-
     void yyerror(char const *s);
 }
 
 %code {
-
     SymbTable sym_table = SymbTable();
     Map declared_id;
-    LabelStack entry_labels;
     LabelStack exit_labels;
-    MIPS mips = MIPS(&sym_table, &declared_id, &entry_labels, &exit_labels);
+    MIPS mips = MIPS(&sym_table, &declared_id, &exit_labels);
 }
 
 %union{
@@ -432,28 +430,27 @@ exp11               : ID LSQUARE exp RSQUARE
 %%
 
 int main(int argc, char *argv[]) {
-
-    /* yydebug = 1; */
-
     extern FILE *yyin;
 
     if (argc < 2) {
         yyparse();
-        mips.print();
-
+        mips.add_exit();
+        mips.print(std::cout);
         return 0;
 
     } else {
-        yyin = fopen(argv[1], "r");
+        std::string file_path = std::string(argv[1]);
+        int index = file_path.find_last_of("/\\");
+        std::string input_file = file_path.substr(index + 1);
 
+        std::string output_file = "./testcases/results/" + input_file + "_output.txt";
+        yyin = fopen(argv[1], "r");
+        std::ofstream output(output_file);
         yyparse();
         mips.add_exit();
         fclose(yyin);
-
-        /* mips.print_id_list(); */
-        mips.sym_table->print_table();
-        mips.print();
-
+        mips.print(output);
+        output.close();
         return 0;
     }
 }

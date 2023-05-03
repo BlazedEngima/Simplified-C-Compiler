@@ -1,9 +1,8 @@
 #include "MIPS.hpp"
 
-MIPS::MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *entry_labels, LabelStack *exit_labels) {
+MIPS::MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *exit_labels) {
     this->sym_table = sym_table;
     this->declared_id = declared_id;
-    this->entry_labels = entry_labels;
     this->exit_labels = exit_labels;
 
     this->code.push_back("main:");
@@ -347,8 +346,8 @@ void MIPS::print_id_list() {
     }
 }
 
-void MIPS::print() {
+void MIPS::print(std::ostream &output) {
     for (auto const &elem : this->code) {
-        std::cout << elem << std::endl;
+        output << elem << std::endl;
     }
 }

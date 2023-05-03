@@ -17,20 +17,11 @@ const int SymbTable::get_symbol(const std::string &id) {
 }
 
 int SymbTable::place_symbol(const std::string &id) {
-
     auto it = this->sym_table.find(id);
     
     // Checks to see if it is already in the map
     if (it != this->sym_table.end())
         return -1;
-
-    // if (!(this->free_mem_addr.empty())) {
-    //     int addr = *(this->free_mem_addr.begin());
-    //     this->sym_table.emplace(id, addr);
-    //     this->free_mem_addr.erase(addr);
-        
-    //     return addr;
-    // }
 
     this->sym_table.emplace(id, this->idx);
     this->idx++;
@@ -52,7 +43,8 @@ void SymbTable::add_branch_counter(void) {
 }
 
 void SymbTable::free_temp_symbol(int id) {
-    this->free_temp_symbols.insert(id);
+    if (this->is_temp_symbol(id))
+        this->free_temp_symbols.insert(id);
 }
 
 std::string SymbTable::place_temp_symbol() {

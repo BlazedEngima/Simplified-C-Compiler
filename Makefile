@@ -11,6 +11,6 @@ parser:
 
 clean:
 	@rm -f lex.yy.c parser.tab.c parser.tab.h parser.output compiler.exe parser.exe test.exe parser.exe.stackdump compiler.exe.stackdump
-
-compiler: clean parser
+	@rm -f ./testcases/results/*
+all: clean parser
 
