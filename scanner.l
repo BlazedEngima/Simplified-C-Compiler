@@ -24,7 +24,7 @@
 %option noyywrap
 
 numbers [0-9]+
-variable [a-zA-Z][a-zA-Z0-9]*
+variable [a-zA-Z][_a-zA-Z0-9]*
 white_space [ \t\n]*
 multi_comment [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 

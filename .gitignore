@@ -1,6 +1,7 @@
 # Prerequisites
 *.cfg
 *.d
+*.asm
 
 # Compiled Object files
 *.slo
