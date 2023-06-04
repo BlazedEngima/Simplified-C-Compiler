@@ -1,0 +1,7 @@
+int numbers[2];
+int n1=1, n2=9;
+int i = 1;
+numbers[0] = n1;
+numbers[1] = n2;
+printf(numbers[i]);
+return;

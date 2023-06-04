@@ -1,0 +1,6 @@
+int a = 100;
+int b = 101;
+int c = 102;
+printf(a+b*c);
+printf(c-(b-a));
+return;

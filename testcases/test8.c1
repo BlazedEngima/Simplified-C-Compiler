@@ -1,0 +1,14 @@
+int year, x, y, z;
+int is_leap_year = 0;
+
+scanf(year);
+
+x = year - (year / 4) * 4;
+y = year - (year / 100) * 100;
+z = year - (year / 400) * 400;
+
+if ((x == 0 && y != 0) || (z == 0)) {
+    is_leap_year = 1;
+}
+printf(is_leap_year);
+return;

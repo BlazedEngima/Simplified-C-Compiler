@@ -1,0 +1,13 @@
+int n, next_term, i;
+int fib1 = 0;
+int fib2 = 1;
+scanf(n);
+i = 3;
+while (i <= n) {
+    next_term = fib1 + fib2;
+    fib1 = fib2;
+    fib2 = next_term;
+    i = i + 1;
+}
+printf(next_term);
+return;
