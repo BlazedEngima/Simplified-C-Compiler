@@ -9,6 +9,18 @@ MIPS::MIPS(SymbTable *sym_table, Map *declared_id, LabelStack *exit_labels) {
     this->code.push_back("\tmove $fp, $sp");
 }
 
+void MIPS::move(const std::string &dest_reg, const std::string &source_reg) {
+    this->code.push_back("\tmove " + dest_reg + ", " + source_reg);
+}
+
+void MIPS::addi(const std::string &dest_reg, const std::string &source_reg, int num) {
+    this->code.push_back("\taddi " + dest_reg + ", " + source_reg + ", " + std::to_string(num));
+}
+
+void MIPS::add(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2) {
+    this->code.push_back("\tadd " + dest_reg + ", " + source_reg_1 + ", " + source_reg_2);
+}
+
 void MIPS::load_int(const std::string &reg, int num) {
     this->code.push_back("\tli " + reg + ", " + std::to_string(num));
 }
@@ -21,6 +33,10 @@ std::string MIPS::load_sym(const std::string &reg, const std::string &source) {
 
 void MIPS::load_addr(const std::string &reg, int addr) {
     this->code.push_back("\tlw " + reg + ", " + std::to_string(addr * -4) + "($fp)");
+}
+
+void MIPS::load_reg(const std::string &dest_reg, const std::string &source_reg, int offset) {
+    this->code.push_back("\tlw " + dest_reg + ", " + std::to_string(offset) + "(" + source_reg + ")");
 }
 
 void MIPS::save_reg(const std::string &reg, int addr) {

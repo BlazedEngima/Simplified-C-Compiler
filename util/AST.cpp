@@ -263,7 +263,7 @@ int Node::evaluate_flip_op(MIPS &code) {
 }
 
 int Node::gen_code(MIPS &code) {
-    std::string reg1 = "$2", reg2 = "$3", reg3 = "$8";
+    std::string reg1 = "$2", reg2 = "$3", reg3 = "$8", reg4 = "$9";
 
     switch (this->type) {
         case _ROOT_: {
@@ -292,8 +292,27 @@ int Node::gen_code(MIPS &code) {
                 std::cout << "Error, array index cannot evaluate to a negative number" << std::endl;
                 exit(1);
             }
-            std::string id = this->left->var_name + "[" + std::to_string(this->right->int_val) + "]";
-            return code.sym_table->get_symbol(id);
+
+            if (right_addr == -1) {
+                std::string id = this->left->var_name + "[" + std::to_string(this->right->int_val) + "]";
+                return code.sym_table->get_symbol(id);
+            }
+
+            int array_head = code.sym_table->get_symbol(this->left->var_name + "[0]");
+            std::string temp_symbol = code.sym_table->place_temp_symbol();
+            int new_addr = code.sym_table->get_symbol(temp_symbol);
+
+            code.move(reg4, "$fp");
+            code.load_int(reg3, -4 * array_head);
+            code.load_addr(reg2, right_addr);
+            code.sll(reg2, reg2, std::to_string(2));
+            code.subu(reg2, "$0", reg2);
+            code.add(reg2, reg2, reg3);
+            code.add(reg4, reg4, reg2);
+            code.load_reg(reg1, reg4);
+            code.save_reg(reg1, new_addr);
+            
+            return new_addr;
             break;
         }
         case _EXP_: {

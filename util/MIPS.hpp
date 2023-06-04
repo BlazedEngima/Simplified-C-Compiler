@@ -25,10 +25,12 @@ class MIPS {
         void load_int(const std::string &reg, int num);
         std::string load_sym(const std::string &reg, const std::string &source);
         void load_addr(const std::string &reg, int addr);
+        void load_reg(const std::string &dest_reg, const std::string &source_reg, int offset=0);
         void save_reg(const std::string &reg, int addr);
         void reg_int_op(const std::string &dest_reg, const std::string &source_reg, int num, op_type op);
         void reg_reg_op(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2, op_type op);
         void clear_reg(const std::string &reg);
+        void move(const std::string &dest_reg, const std::string &source_reg);
 
         void nop(void);
         void sltu(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
@@ -42,7 +44,9 @@ class MIPS {
         void or_op(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
         void ori(const std::string &dest_reg, const std::string &source_reg_1, int num);
         void addiu(const std::string &dest_reg, const std::string &source_reg, int num);
+        void addi(const std::string &dest_reg, const std::string &source_reg, int num);
         void addu(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
+        void add(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
         void subu(const std::string &dest_reg, const std::string &source_reg_1, const std::string &source_reg_2);
         void sll(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg);
         void sra(const std::string &dest_reg, const std::string &source_reg, const std::string &num_or_reg);
